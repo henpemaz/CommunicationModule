@@ -44,11 +44,12 @@ enum comm_status_code comm_setup(void) {
 	// Start Serial
 	sim_serial.begin(9600);
 
-	module_is_on = true;
-	if (get_reply("AT", ok_reply, 500) == COMM_OK) {  // AT to check if the module is ON
-		power_off();
-	}
-	module_is_on = false;
+	comm_abort(); // Force a hardware reset and shut down the module
+	//module_is_on = true;
+	//if (get_reply("AT", ok_reply, 500) == COMM_OK) {  // AT to check if the module is ON
+	//	power_off();
+	//}
+	//module_is_on = false;
 
 	flush_input();
 	return COMM_OK;
@@ -241,6 +242,7 @@ enum comm_status_code comm_abort(void) {
 		digitalWrite(SIM_RESET, HIGH);
 		delay(1000);
 		power_on();
+		delay(2000);
 	}
 	return power_off();
 }

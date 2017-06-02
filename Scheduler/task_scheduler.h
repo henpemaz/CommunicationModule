@@ -2,10 +2,13 @@
 #define _TASK_SCHEDULER_H_
 
 #include "Arduino.h"
+#include <avr/wdt.h>
+#include <avr/sleep.h>
+
 
 void sched_setup(void);
-uint8_t sched_add_task(void(*task)(void), uint32_t delay, uint32_t looptime);
-
+void sched_mainloop(void);
+uint8_t sched_add_task(void(*task)(void), int32_t delay, int32_t looptime);
 
 #endif // !_TASK_SCHEDULER_H_
 
