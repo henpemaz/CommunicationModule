@@ -10,9 +10,18 @@
 #include "gsm_communication.h"
 #include "task_scheduler.h"
 
+
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 #include <avr/power.h>
 
+
+#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
+// #include <rtc_count.h>
+
+#endif
+
 void dummy_func() {
+	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(1000);
 	digitalWrite(LED_BUILTIN, LOW);
@@ -33,11 +42,10 @@ void dummy_func() {
 
 void setup()
 {
-	pinMode(LED_BUILTIN, OUTPUT);
+	// Board setup
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 
-	// Basic board setup
 	wdt_disable();
-
 	// Shut down unused peripherals
 	power_adc_disable();
 	power_twi_disable();
@@ -46,9 +54,16 @@ void setup()
 	power_timer2_disable();
 	power_timer3_disable();
 	power_timer4_disable();  // Requires you to patch iom32u4.h -> add (#define PRTIM4 4) and (#define __AVR_HAVE_PRR1_PRTIM4) and add {| (1 << PRTIM4)} to the existing #define __AVR_HAVE_PRR1
-	#ifndef _DEBUG
-	//power_usb_disable();
+	#ifndef (_DEBUG | DEBUG | __DEBUG__)
+	power_usb_disable();
 	#endif
+
+#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
+	;
+#endif
+
+	
+
 
 	// Set up communication storage and box interface
 

@@ -1,5 +1,13 @@
 #include "task_scheduler.h"
 
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
+#include <avr/wdt.h>
+#include <avr/sleep.h>
+
+#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
+#include <samd.h>
+#endif
+
 /*
 	Simple scheduler
 	1Hz tick interruption updates the timers
@@ -18,7 +26,7 @@ struct task_handle {
 
 struct task_handle task_list[SCHED_MAX_TASKS];
 
-void sched_setup(void){
+void sched_setup(void) {
 	// Structure setup
 	uint8_t i;
 	for (i = 0; i < SCHED_MAX_TASKS; i++) {
@@ -26,6 +34,7 @@ void sched_setup(void){
 	}
 
 	// Clocks setup
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 	// We'll be using the Watchdog since it's always ON
 	// Configure the Watchdog for 1Hz interrupts
 	noInterrupts();
@@ -43,13 +52,27 @@ void sched_setup(void){
 }
 
 ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, updates task delays
+	tick_callback();
+}  // After the IRC returns, the CPU runs the mainloop
+
+#elif __SAMD21G18A__
+
+}
+
+void rtc_1hz_tick(void) {
+	tick_callback();
+}
+#endif
+
+inline void tick_callback(void) {
 	uint8_t i;
 	for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
 		if (task_list[i].task != NULL) {
 			task_list[i].delay -= 1;  // Update time by 1 tick
 		}
 	}
-}  // After the IRC returns, the CPU runs the mainloop
+}
+
 
 uint8_t sched_add_task(void (*task)(void), int32_t delay, int32_t looptime) {
 	uint8_t i;

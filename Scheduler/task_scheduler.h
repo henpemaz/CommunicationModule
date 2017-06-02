@@ -2,8 +2,6 @@
 #define _TASK_SCHEDULER_H_
 
 #include "Arduino.h"
-#include <avr/wdt.h>
-#include <avr/sleep.h>
 
 
 void sched_setup(void);
