@@ -3,15 +3,15 @@
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module - Watchdog used for sleep management*/
 #include <avr/wdt.h>
 #include <avr/sleep.h>
+#endif
 
-#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
+#ifdef __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
 #include <samd.h>
 // cheat with the macros
 #define SLEEP_MODE_PWR_DOWN 0
 #define set_sleep_mode(...)   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk
 #define sleep_enable(...) 
-#define sleep_cpu(...); __DSB();__WFI();
-
+#define sleep_cpu(...) do{__WFI();}while(0)
 #endif
 
 /*
@@ -61,17 +61,17 @@ void sched_setup(void) {
 ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, updates task delays
 	tick_callback();
 }  // After the IRC returns, the CPU runs the mainloop
-
-#elif __SAMD21G18A__
+#endif
+#ifdef __SAMD21G18A__
 	// Using the RTC module
-
 	// Enable clock source
 	PM->APBAMASK.reg |= PM_APBAMASK_RTC;
-	SYSCTRL->XOSC32K.reg = //SYSCTRL_XOSC32K_ONDEMAND | // Avoid unecessary syncs
+
+	SYSCTRL->XOSC32K.reg = SYSCTRL_XOSC32K_ONDEMAND |
 		SYSCTRL_XOSC32K_RUNSTDBY |
-		//SYSCTRL_XOSC32K_EN32K |  // Output not being routed anywhere
+		SYSCTRL_XOSC32K_EN32K |
 		SYSCTRL_XOSC32K_XTALEN |
-		SYSCTRL_XOSC32K_STARTUP(2) | // We can use a very short startup, precision is not an issue
+		SYSCTRL_XOSC32K_STARTUP(6) |
 		SYSCTRL_XOSC32K_ENABLE;
 
 	// Configure GCLK2
@@ -84,18 +84,20 @@ ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, u
 	
 	// Reseting the module
 	// Using MODE 1 for set period overflow
-	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_SWRST; // software reset and disable
+	RTC->MODE1.CTRL.reg &= ~RTC_MODE1_CTRL_ENABLE; // disable RTC
+	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
+	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_SWRST; // software reset
 	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
 
 	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_MODE_COUNT16 // 16bit counter mode
 		| RTC_MODE1_CTRL_PRESCALER_DIV1024; // 1hz count
-	RTC->MODE1.PER.reg |= RTC_MODE1_PER_PER(1); // count to 1 at 1hz for 1s period
+	RTC->MODE1.PER.reg |= RTC_MODE1_PER_PER(0); // count to 1 at 1hz for 1s period
 
+	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // clear flag
 	RTC->MODE1.INTENSET.reg |= RTC_MODE1_INTENSET_OVF; // enable overflow interrupt
-	RTC->MODE1.INTENCLR.reg |= RTC_MODE1_INTENCLR_CMP0 | RTC_MODE1_INTENCLR_CMP1 | RTC_MODE1_INTENCLR_SYNCRDY; // Disable other interrupts
+	//RTC->MODE1.INTENCLR.reg |= RTC_MODE1_INTENCLR_CMP0 | RTC_MODE1_INTENCLR_CMP1 | RTC_MODE1_INTENCLR_SYNCRDY; // Disable other interrupts
 
 	NVIC_EnableIRQ(RTC_IRQn); // enable RTC interrupt 
-	NVIC_SetPriority(RTC_IRQn, 0x00);
 
 	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_ENABLE; // enable RTC
 	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
@@ -103,11 +105,12 @@ ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, u
 
 void RTC_Handler(void)
 {
+	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // must clear flag at end
 	tick_callback();
 
-	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // must clear flag at end
 }
 #endif
+
 
 inline void tick_callback(void) {
 	uint8_t i;
@@ -147,22 +150,14 @@ void sched_mainloop(void) {
 		uint8_t i;
 		for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
 			if (task_list[i].task != NULL) {
-				if (task_list[i].delay <= 0) {  // If it can be run
-
+				while (task_list[i].delay <= 0) {  // If it can be run
 					task_list[i].task();  // Run task
 					noInterrupts(); // Atomic access to the task delay
 					task_list[i].delay += task_list[i].looptime;
 					interrupts(); // End of atomic
-					break;  // Task will be run from MAINLOOP
 				}
 			}
 		}
-
-		sleep_cpu(); // Will wake up every 1s due to the WDT interrupt
-
-		digitalWrite(LED_BUILTIN, HIGH);
-		delay(50);
-		digitalWrite(LED_BUILTIN, LOW);
-		delay(50);
+		sleep_cpu(); // Will wake up every 1s due to the WDT/RTC interrupt
 	}
 }
