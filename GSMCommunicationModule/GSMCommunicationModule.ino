@@ -7,17 +7,15 @@
 
 
 
-#include "gsm_communication.h"
 #include "task_scheduler.h"
 
 
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 #include <avr/power.h>
-
+#include "gsm_communication.h"
 
 #elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
-// #include <rtc_count.h>
-
+#include "lora_communication.h"
 #endif
 
 void dummy_func() {
@@ -59,7 +57,9 @@ void setup()
 	#endif
 
 #elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
-	;
+
+	// TODO POWER SAVING FEATURES
+
 #endif
 
 	

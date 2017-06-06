@@ -1,11 +1,17 @@
 #include "task_scheduler.h"
 
-#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module - Watchdog used for sleep management*/
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 
-#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module*/
+#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
 #include <samd.h>
+// cheat with the macros
+#define SLEEP_MODE_PWR_DOWN 0
+#define set_sleep_mode(...)   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk
+#define sleep_enable(...) 
+#define sleep_cpu __WFI
+
 #endif
 
 /*
@@ -25,6 +31,7 @@ struct task_handle {
 };
 
 struct task_handle task_list[SCHED_MAX_TASKS];
+inline void tick_callback(void);
 
 void sched_setup(void) {
 	// Structure setup
@@ -56,11 +63,49 @@ ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, u
 }  // After the IRC returns, the CPU runs the mainloop
 
 #elif __SAMD21G18A__
+	// Using the RTC module
 
+	// Enable clock source
+	PM->APBAMASK.reg |= PM_APBAMASK_RTC;
+	SYSCTRL->XOSC32K.reg = //SYSCTRL_XOSC32K_ONDEMAND | // Avoid unecessary syncs
+		SYSCTRL_XOSC32K_RUNSTDBY |
+		//SYSCTRL_XOSC32K_EN32K |  // Output not being routed anywhere
+		SYSCTRL_XOSC32K_XTALEN |
+		SYSCTRL_XOSC32K_STARTUP(2) | // We can use a very short startup, precision is not an issue
+		SYSCTRL_XOSC32K_ENABLE;
+
+	// Configure GCLK2
+	GCLK->GENDIV.reg = GCLK_GENDIV_ID(2) | GCLK_GENDIV_DIV(4); // With DIVSEL the division factor is 2^(DIV + 1), so we use 2^5 for a 32 factor (1khz out)
+	while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
+	GCLK->GENCTRL.reg = (GCLK_GENCTRL_GENEN | GCLK_GENCTRL_SRC_XOSC32K | GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_DIVSEL);
+	while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
+	GCLK->CLKCTRL.reg = (uint32_t)((GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK2 | (RTC_GCLK_ID << GCLK_CLKCTRL_ID_Pos)));
+	while (GCLK->STATUS.bit.SYNCBUSY);
+	
+	// Reseting the module
+	// Using MODE 1 for set period overflow
+	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_SWRST; // software reset and disable
+	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
+
+	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_MODE_COUNT16 // 16bit counter mode
+		| RTC_MODE1_CTRL_PRESCALER_DIV1024; // 1hz count
+	RTC->MODE1.PER.reg |= RTC_MODE1_PER_PER(1); // count to 1 at 1hz for 1s period
+
+	RTC->MODE1.INTENSET.reg |= RTC_MODE1_INTENSET_OVF; // enable overflow interrupt
+	RTC->MODE1.INTENCLR.reg |= RTC_MODE1_INTENCLR_CMP0 | RTC_MODE1_INTENCLR_CMP1 | RTC_MODE1_INTENCLR_SYNCRDY; // Disable other interrupts
+
+	NVIC_EnableIRQ(RTC_IRQn); // enable RTC interrupt 
+	NVIC_SetPriority(RTC_IRQn, 0x00);
+
+	RTC->MODE1.CTRL.reg |= RTC_MODE1_CTRL_ENABLE; // enable RTC
+	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
 }
 
-void rtc_1hz_tick(void) {
+void RTC_Handler(void)
+{
 	tick_callback();
+
+	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // must clear flag at end
 }
 #endif
 

@@ -1,5 +1,6 @@
 #include "gsm_communication.h"
 
+#ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 #include <SoftwareSerial.h>
 
 #define db(str) Serial.print(str);
@@ -269,3 +270,4 @@ void uitoa(uint16_t val, uint8_t *buff) {
 }
 
 
+#endif
