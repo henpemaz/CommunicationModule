@@ -24,9 +24,15 @@
     <ClInclude Include="gsm_communication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Scheduler\task_scheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gsm_communication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Scheduler\task_scheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
