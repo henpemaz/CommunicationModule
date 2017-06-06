@@ -36,7 +36,7 @@ void setup()
 	// Board setup
 
 
-	// TODO POWER SAVING FEATURES
+	// TODO Board specific POWER SAVING FEATURES
 
 
 
