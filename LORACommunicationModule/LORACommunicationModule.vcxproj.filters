@@ -15,30 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GSMCommunicationModule\gsm_communication.h">
+    <None Include="LORACommunicationModule.ino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="__vm\.LORACommunicationModule.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scheduler\task_scheduler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__vm\.GSMCommunicationModule.vsarduino.h">
+    <ClInclude Include="lora_communication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="GSMCommunicationModule\GSMCommunicationModule.ino" />
-    <None Include="GSMCommunicationModule\GSMCommunicationModule.vcxproj" />
-    <None Include="GSMCommunicationModule\GSMCommunicationModule.vcxproj.filters" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Scheduler\task_scheduler.cpp">
+    <ClCompile Include="lora_communication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GSMCommunicationModule\gsm_communication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="GSMCommunicationModule\sim_at_commands.txt" />
   </ItemGroup>
 </Project>

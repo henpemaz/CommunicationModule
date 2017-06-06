@@ -10,7 +10,7 @@
 #define SLEEP_MODE_PWR_DOWN 0
 #define set_sleep_mode(...)   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk
 #define sleep_enable(...) 
-#define sleep_cpu __WFI
+#define sleep_cpu(...); __DSB();__WFI();
 
 #endif
 
