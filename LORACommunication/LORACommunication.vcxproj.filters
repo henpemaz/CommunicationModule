@@ -15,16 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LORACommunicationModule.ino" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="__vm\.LORACommunicationModule.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lora_communication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Scheduler\task_scheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.LORACommunication.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,8 +29,8 @@
     <ClCompile Include="lora_communication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Scheduler\task_scheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LORACommunication.ino" />
   </ItemGroup>
 </Project>

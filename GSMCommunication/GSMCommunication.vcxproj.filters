@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="GSMCommunicationModule.ino" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="__vm\.GSMCommunicationModule.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="gsm_communication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Scheduler\task_scheduler.h">
+    <ClInclude Include="__vm\.GSMCommunication.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,8 +26,8 @@
     <ClCompile Include="gsm_communication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Scheduler\task_scheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GSMCommunication.ino" />
   </ItemGroup>
 </Project>
