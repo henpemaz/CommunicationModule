@@ -26,7 +26,7 @@ enum comm_status_code comm_setup(void);
 	Returns COMM_ERR_RETRY if the boot or some of the issued commands failed.
 	Returns COMM_ERR_RETRY_LATER if the timeout of the GPRS subscription was reached
 */
-enum comm_status_code comm_start_report(int totallen);
+enum comm_status_code comm_start_report(uint16_t totallen);
 
 /*
 	Send binary data for the POST action
@@ -45,6 +45,19 @@ enum comm_status_code comm_send_report(void);
 	Returns COMM_OK if the module was shut down, COMM_ERR_RETRY if the module didn't answer to the shutdown command
 */
 enum comm_status_code comm_abort(void);
+
+
+
+#ifdef __GSM_TEST__
+// Expose internal functions for test suite
+extern const char ok_reply[];
+enum comm_status_code power_on(void);
+enum comm_status_code power_off(void);
+inline enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
+enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_reply, uint16_t timeout);
+inline void flush_input(void);
+#endif
+
 
 
 #endif // !_GSM_COMMUNICATION_H_
