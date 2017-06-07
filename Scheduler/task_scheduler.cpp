@@ -3,6 +3,7 @@
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module - Watchdog used for sleep management*/
 #include <avr/wdt.h>
 #include <avr/sleep.h>
+#include <avr/power.h>
 #endif
 
 #ifdef __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
