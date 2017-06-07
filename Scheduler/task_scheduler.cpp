@@ -17,8 +17,8 @@
 /*
 	Simple scheduler
 	1Hz tick interruption updates the timers
-	mainloop calls tasks ready to be executed (non-preemptivelly)
-	tasks can be made cyclic (looptime > 0)
+	mainloop calls tasks ready to be executed (non-preemptivelly) in a fifo execution order
+	made for cyclic tasks (looptime)
 */
 
 #define SCHED_MAX_TASKS 8
@@ -31,6 +31,8 @@ struct task_handle {
 };
 
 struct task_handle task_list[SCHED_MAX_TASKS];
+
+
 inline void tick_callback(void);
 
 void sched_setup(void) {
@@ -103,9 +105,9 @@ ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, u
 	while (RTC->MODE1.STATUS.bit.SYNCBUSY);
 }
 
-void RTC_Handler(void)
+void RTC_Handler(void)  // Fills in a weak reference on the Core definitions
 {
-	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // must clear flag at end
+	RTC->MODE1.INTFLAG.reg = RTC_MODE1_INTFLAG_OVF; // must clear flag (by writting 1 to it)
 	tick_callback();
 
 }
@@ -114,6 +116,7 @@ void RTC_Handler(void)
 
 inline void tick_callback(void) {
 	uint8_t i;
+	// Interrupts should be already non-rentrant, and this one has a 1s cycle
 	for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
 		if (task_list[i].task != NULL) {
 			task_list[i].delay -= 1;  // Update time by 1 tick
