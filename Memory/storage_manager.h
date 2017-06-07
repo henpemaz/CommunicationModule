@@ -1,5 +1,5 @@
-#ifndef _EEPROM_MANAGER_h
-#define _EEPROM_MANAGER_h
+#ifndef _STORAGE_MANAGER_h
+#define _STORAGE_MANAGER_h
 
 #include "arduino.h"
 
@@ -21,11 +21,11 @@
 * Concatenation de blocks de 18 bytes avec chaque block un échantillon de données.
 *
 * --- Fonctions accessibles aux autres parties du système ---
-* 1) void store_sample(byte *sample)
+* 1) void stor_write_sample(byte *sample)
 *
-* 2) int read_samples(byte *buffer, int maxlen)
+* 2) int stor_read_sample(byte *buffer, int maxlen)
 *
-* 3) void commit_head(bool do_commit)
+* 3) void stor_confirm_read(bool do_commit)
 *
 * --- Variables internes pour gestion ---
 * 1) addresse_actuel: l'addresse où le prochain échantillon va être stocké
@@ -43,26 +43,26 @@
 /*
 	Set up memory interface
 */
-void eeprom_setup(void);
+void stor_setup(void);
 
 /*
 	Ce fonction va stocker un échantillon de données dans la mémoire à partir de la
 	première addresse qui est libre.
 */
-void store_sample(uint8_t * data);
+void stor_write_sample(uint8_t * data);
 
 
 /*
 	Ce fonction va lire et retourner les données avec longueur 'len' qui sont stockés
 	dans la mémoire à partir de l'adresse 'addresse_lu'.
 */
-uint16_t read_samples(uint8_t *buffer, uint16_t maxlen);
+uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen);
 
 
 /*
 	Avancer la tête de lecture à la dernière position lue, ou recoule la position le lecture à la tête de lecture
 */
-void commit_head(bool do_commit);
+void stor_confirm_read(bool do_commit);
 
 
 void erase_eeprom();

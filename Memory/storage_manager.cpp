@@ -1,4 +1,4 @@
-#include "eeprom_manager.h"
+#include "storage_manager.h"
 #include <SPI.h>
 
 // pins
@@ -36,7 +36,7 @@ void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len);
 /*
 	Set up memory interface
 */
-void eeprom_setup(void) {
+void stor_setup(void) {
 	SPI.begin();
 	pinMode(SLAVESELECT, OUTPUT);
 	digitalWrite(SLAVESELECT, HIGH); //disable device
@@ -49,7 +49,7 @@ void eeprom_setup(void) {
 * Ce fonction va stocker un échantillon de données dans la mémoire à partir de la
 * première addresse qui est libre.
 */
-void store_sample(uint8_t *data)
+void stor_write_sample(uint8_t *data)
 {
 	write_eeprom(data, adr_ecr, SAMPLE_SIZE);
 	adr_ecr += SAMPLE_SIZE;
@@ -59,7 +59,7 @@ void store_sample(uint8_t *data)
 * Ce fonction va lire et retourner les données avec longueur 'len' qui sont stockés
 * dans la mémoire à partir de l'adresse 'addresse_lu'.
 */
-uint16_t read_samples(uint8_t *buffer, uint16_t maxlen)
+uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen)
 {
 	unsigned int av_len = 0;
 	if (adr_ecr >= adr_lir)
@@ -78,7 +78,7 @@ uint16_t read_samples(uint8_t *buffer, uint16_t maxlen)
 }
 
 
-void commit_head(bool do_commit)
+void stor_confirm_read(bool do_commit)
 {
 	if (do_commit)
 	{

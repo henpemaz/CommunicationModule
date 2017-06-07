@@ -7,7 +7,7 @@
 
 
 
-#include "eeprom_manager.h"
+#include "storage_manager.h"
 
 
 void setup() {
@@ -18,7 +18,7 @@ void setup() {
 	while (Serial.available() == 0);
 	Serial.println("Begin");
 
-	eeprom_setup();
+	stor_setup();
 }
 
 void loop() {
@@ -31,7 +31,7 @@ void loop() {
 		buf[I] = 0;
 	}
 
-	int len = read_samples(buf, maxlen);
+	int len = stor_read_sample(buf, maxlen);
 	print_samples(buf, len);
 
 	byte sample[18];
@@ -41,14 +41,14 @@ void loop() {
 	}
 	for (int I = 0; I<15; I++)
 	{
-		store_sample(sample);
+		stor_write_sample(sample);
 	}
 
-	len = read_samples(buf, maxlen);
+	len = stor_read_sample(buf, maxlen);
 	print_samples(buf, len);
 
 	erase_eeprom();
-	len = read_samples(buf, maxlen);
+	len = stor_read_sample(buf, maxlen);
 	print_samples(buf, len);
 
 	// end of execution

@@ -21,12 +21,12 @@
     <ClInclude Include="__vm\.Memory.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="eeprom_manager.h">
+    <ClInclude Include="storage_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="eeprom_manager.cpp">
+    <ClCompile Include="storage_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
