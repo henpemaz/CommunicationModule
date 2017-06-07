@@ -28,7 +28,6 @@ uint16_t adr_lir = 0;
 uint16_t adr_lir_committed = 0;
 
 // Prototypes
-void erase_eeprom();
 bool memory_is_busy();
 void write_eeprom(uint8_t *data, uint16_t address, uint16_t len);
 void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len);

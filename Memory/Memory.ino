@@ -2,11 +2,16 @@
 // 
 // 
 
+
+
+
+
+
 #include "eeprom_manager.h"
 
 
 void setup() {
-	// put your setup code here, to run once:
+
 	while (!Serial);
 	Serial.begin(115200);
 	
@@ -17,7 +22,7 @@ void setup() {
 }
 
 void loop() {
-	// put your main code here, to run repeatedly:
+
 	int maxlen = 148;
 	int address = 0;
 	byte buf[148];
@@ -29,8 +34,8 @@ void loop() {
 	int len = read_samples(buf, maxlen);
 	print_samples(buf, len);
 
-	byte sample[SAMPLE_SIZE];
-	for (int I = 0; I<SAMPLE_SIZE; I++)
+	byte sample[18];
+	for (int I = 0; I<18; I++)
 	{
 		sample[I] = I;
 	}

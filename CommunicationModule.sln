@@ -11,6 +11,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GSMCommunication", "GSMComm
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LORACommunication", "LORACommunication\LORACommunication.vcxproj", "{446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplingTask", "C:\Users\henpe\Documents\Arduino\SamplingTask\SamplingTask.vcxproj", "{800E30E6-6CC1-48BC-93EA-0D22BABFFEA9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReportingTask", "C:\Users\henpe\Documents\Arduino\ReportingTask\ReportingTask.vcxproj", "{0F59B7C4-F287-4CE2-B3AB-4982C0C2C8E2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CommunicationModule", "C:\Users\henpe\Documents\Arduino\CommunicationModule\CommunicationModule.vcxproj", "{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -33,6 +39,18 @@ Global
 		{446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA}.Debug|x86.Build.0 = Debug|Win32
 		{446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA}.Release|x86.ActiveCfg = Release|Win32
 		{446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA}.Release|x86.Build.0 = Release|Win32
+		{800E30E6-6CC1-48BC-93EA-0D22BABFFEA9}.Debug|x86.ActiveCfg = Debug|Win32
+		{800E30E6-6CC1-48BC-93EA-0D22BABFFEA9}.Debug|x86.Build.0 = Debug|Win32
+		{800E30E6-6CC1-48BC-93EA-0D22BABFFEA9}.Release|x86.ActiveCfg = Release|Win32
+		{800E30E6-6CC1-48BC-93EA-0D22BABFFEA9}.Release|x86.Build.0 = Release|Win32
+		{0F59B7C4-F287-4CE2-B3AB-4982C0C2C8E2}.Debug|x86.ActiveCfg = Debug|Win32
+		{0F59B7C4-F287-4CE2-B3AB-4982C0C2C8E2}.Debug|x86.Build.0 = Debug|Win32
+		{0F59B7C4-F287-4CE2-B3AB-4982C0C2C8E2}.Release|x86.ActiveCfg = Release|Win32
+		{0F59B7C4-F287-4CE2-B3AB-4982C0C2C8E2}.Release|x86.Build.0 = Release|Win32
+		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Debug|x86.ActiveCfg = Debug|Win32
+		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Debug|x86.Build.0 = Debug|Win32
+		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Release|x86.ActiveCfg = Release|Win32
+		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -44,6 +44,19 @@ void sched_setup(void) {
 
 	// Clocks setup
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
+	// Board setup
+
+	wdt_disable();
+	// Shut down unused peripherals
+	power_adc_disable();
+	power_twi_disable();
+	// power_timer0_disable(); // Used by "delay" and "millis", automatically shut down during sleep (except IDLE)
+	power_timer1_disable();
+	power_timer2_disable();
+	power_timer3_disable();
+	power_timer4_disable();  // Requires you to patch iom32u4.h -> add (#define PRTIM4 4) and (#define __AVR_HAVE_PRR1_PRTIM4) and add {| (1 << PRTIM4)} to the existing #define __AVR_HAVE_PRR1
+	power_usb_disable();
+
 	// We'll be using the Watchdog since it's always ON
 	// Configure the Watchdog for 1Hz interrupts
 	noInterrupts();
@@ -63,8 +76,12 @@ void sched_setup(void) {
 ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, updates task delays
 	tick_callback();
 }  // After the IRC returns, the CPU runs the mainloop
+
 #endif
 #ifdef __SAMD21G18A__
+	// Board setup
+	USBDevice.standby();
+	
 	// Using the RTC module
 	// Enable clock source
 	PM->APBAMASK.reg |= PM_APBAMASK_RTC;

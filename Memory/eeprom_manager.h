@@ -65,7 +65,7 @@ uint16_t read_samples(uint8_t *buffer, uint16_t maxlen);
 void commit_head(bool do_commit);
 
 
-
+void erase_eeprom();
 
 
 
