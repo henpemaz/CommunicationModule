@@ -1,9 +1,33 @@
+#include <SoftwareSerial.h>
 
 
 
 
 
 
+// NOTE : Define either GSM or LORA on the project settings !
+
+#ifdef GSM
+#ifndef __AVR_ATmega32U4__
+#error Wrong board !
+#endif
+
+#include "gsm_communication.h"
+
+#endif
+
+#ifdef LORA
+#ifndef __SAMD21G18A__
+#error Wrong board !
+#endif
+
+#include "lora_communication.h"
+
+#endif
+
+
+#include "task_scheduler.h"
+#include "storage_manager.h"
 
 
 
@@ -19,7 +43,9 @@ void dummy_func() {
 	digitalWrite(LED_BUILTIN, LOW);
 	delay(1000);
 }
-#define stor_setup dummy_func
+
+//#define gsm_comm_setup dummy_func
+//#define stor_setup dummy_func
 #define sampling_setup dummy_func
 #define reporting_setup dummy_func
 #define sampling_task dummy_func
@@ -32,7 +58,7 @@ void setup()
 {
 	// Set up communication storage and box interface
 
-	comm_setup();
+	gsm_comm_setup();
 
 	stor_setup();
 

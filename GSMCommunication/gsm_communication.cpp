@@ -1,4 +1,3 @@
-#define __GSM_TEST__
 #include "gsm_communication.h"
 
 #include <SoftwareSerial.h>
@@ -31,10 +30,10 @@ void uitoa(uint16_t val, uint8_t *buff);
 
 bool module_is_on;
 
-const char ok_reply[] = "\r\nOK\r\n";
+extern const char ok_reply[] = "\r\nOK\r\n";
 
 
-enum comm_status_code comm_setup(void) {
+enum comm_status_code gsm_comm_setup(void) {
 	// Configure pins
 	digitalWrite(SIM_RESET, HIGH);
 	pinMode(SIM_RESET, OUTPUT);
@@ -45,7 +44,7 @@ enum comm_status_code comm_setup(void) {
 	// Start Serial
 	sim_serial.begin(9600);
 
-	comm_abort(); // Force a hardware reset and shut down the module
+	gsm_comm_abort(); // Force a hardware reset and shut down the module
 	//module_is_on = true;
 	//if (get_reply("AT", ok_reply, 500) == COMM_OK) {  // AT to check if the module is ON
 	//	power_off();
@@ -138,7 +137,7 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 	return COMM_ERR_RETRY;
 }
 
-enum comm_status_code comm_start_report(uint16_t totallen) {
+enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 	uint16_t timeout;
 	timeout = 60000;  // timeout for GPRS connection
 
@@ -197,13 +196,13 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 }
 
 
-enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght) {
+enum comm_status_code gsm_comm_fill_report(const uint8_t *buffer, int lenght) {
 	sim_serial.write(buffer, lenght);  // Write binary data to serial
 	return COMM_OK;
 }
 
 
-enum comm_status_code comm_send_report(void) {
+enum comm_status_code gsm_comm_send_report(void) {
 	flush_input();
 	if (get_reply("AT+HTTPACTION=1", ok_reply, 500) != COMM_OK) { // Do POST
 		db("\ncomm_send_report: no ok\n");
@@ -236,7 +235,7 @@ enum comm_status_code comm_send_report(void) {
 }
 
 
-enum comm_status_code comm_abort(void) {
+enum comm_status_code gsm_comm_abort(void) {
 	if (get_reply("AT", ok_reply, 100) != COMM_OK) { // Module stuck
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
@@ -268,4 +267,3 @@ void uitoa(uint16_t val, uint8_t *buff) {
 	// Left shift the result (remove padding)
 	if (i) do { buff[0] = buff[i]; } while (*(buff++) != 0);
 }
-

@@ -18,7 +18,7 @@ enum comm_status_code {
 	Configure Serial and IO pins to operate the communication module. If the module is ON, turn it OFF
 	Always returns COMM_OK, no check is performed
 */
-enum comm_status_code comm_setup(void);
+enum comm_status_code lora_comm_setup(void);
 
 /*
 	Turn on the module, start a session and prepare to send data
@@ -26,25 +26,25 @@ enum comm_status_code comm_setup(void);
 	Returns COMM_ERR_RETRY if the boot or some of the issued commands failed.
 	Returns COMM_ERR_RETRY_LATER if the timeout of the connection was reached
 */
-enum comm_status_code comm_start_report(int totallen);
+enum comm_status_code lora_comm_start_report(int totallen);
 
 /*
 	Send binary data for the repost session
 	Always returns COMM_OK, no overflow check is performed
 */
-enum comm_status_code comm_fill_report(const uint8_t *buffer, int length);
+enum comm_status_code lora_comm_fill_report(const uint8_t *buffer, int length);
 
 /*
 	Issue the report action and await for results, then shut down the module
 	Returns COMM_OK sucessful communication. Returns COMM_ERR_RETRY on module error. Returns COMM_ERR_RETRY_LATER on timeouts and connection errors
 */
-enum comm_status_code comm_send_report(void);
+enum comm_status_code lora_comm_send_report(void);
 
 /*
 	Stop any on-going opperation and shut down the module. Performs a hardware reset if the module is not responding (might take several seconds)
 	Returns COMM_OK if the module was shut down, COMM_ERR_RETRY if the module didn't answer to the shutdown command after reset
 */
-enum comm_status_code comm_abort(void);
+enum comm_status_code lora_comm_abort(void);
 
 
 #endif // !_LORA_COMMUNICATION_H_
