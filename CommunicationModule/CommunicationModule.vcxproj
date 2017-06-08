@@ -86,6 +86,7 @@
     <ClInclude Include="..\LORACommunication\lora_communication.h" />
     <ClInclude Include="..\Memory\storage_manager.h" />
     <ClInclude Include="..\Scheduler\task_scheduler.h" />
+    <ClInclude Include="sampling_task.h" />
     <ClInclude Include="__vm\.CommunicationModule.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +94,7 @@
     <ClCompile Include="..\LORACommunication\lora_communication.cpp" />
     <ClCompile Include="..\Memory\storage_manager.cpp" />
     <ClCompile Include="..\Scheduler\task_scheduler.cpp" />
+    <ClCompile Include="sampling_task.cpp" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
