@@ -12,11 +12,14 @@
 
 void setup() {
 
-	while (!Serial);
+	//while (!Serial);
 	Serial.begin(115200);
 	
 	while (Serial.available() == 0);
 	Serial.println("Begin");
+
+	pinMode(8, OUTPUT);
+	digitalWrite(8, HIGH); //disable radio device
 
 	stor_setup();
 }
@@ -47,7 +50,7 @@ void loop() {
 	len = stor_read_sample(buf, maxlen);
 	print_samples(buf, len);
 
-	erase_eeprom();
+	stor_erase_eeprom();
 	len = stor_read_sample(buf, maxlen);
 	print_samples(buf, len);
 

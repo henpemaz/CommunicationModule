@@ -5,7 +5,7 @@
 #define DATAOUT MOSI//MOSI
 #define DATAIN  MISO//MISO
 #define SPICLOCK  SCK//sck
-#define SLAVESELECT 12//ss
+#define SLAVESELECT A5//ss
 
 // opcodes
 #define WREN  0x06
@@ -38,11 +38,15 @@ void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len);
 */
 void stor_setup(void) {
 	SPI.begin();
+
+	pinMode(8, OUTPUT);
+	digitalWrite(8, HIGH); //disable radio device to avoid conflicts
+
 	pinMode(SLAVESELECT, OUTPUT);
 	digitalWrite(SLAVESELECT, HIGH); //disable device
 
 									 //erase device
-	erase_eeprom();
+	stor_erase_eeprom();
 }
 
 /*
@@ -61,16 +65,7 @@ void stor_write_sample(uint8_t *data)
 */
 uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen)
 {
-	unsigned int av_len = 0;
-	if (adr_ecr >= adr_lir)
-	{
-		av_len = adr_ecr - adr_lir;
-	}
-	else
-	{
-		av_len = adr_ecr + (MEMORY_SIZE - adr_lir);
-	}
-	unsigned int len = min(av_len, maxlen);
+	uint16_t len = min(stor_available(), maxlen);
 
 	read_eeprom(buffer, adr_lir, len);
 	adr_lir += len;
@@ -91,7 +86,20 @@ void stor_confirm_read(bool do_commit)
 }
 
 
-void erase_eeprom()
+uint16_t stor_available(void)
+{
+	if (adr_ecr >= adr_lir)
+	{
+		return adr_ecr - adr_lir;
+	}
+	else
+	{
+		return adr_ecr + (MEMORY_SIZE - adr_lir);
+	}
+}
+
+
+void stor_erase_eeprom()
 {
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(WREN); //write enable
