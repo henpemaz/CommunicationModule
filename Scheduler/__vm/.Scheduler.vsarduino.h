@@ -12,9 +12,8 @@
 
 #ifndef _VSARDUINO_H_
 #define _VSARDUINO_H_
-#define _VMDEBUG 1
 #define F_CPU 48000000L
-#define ARDUINO 10801
+#define ARDUINO 10802
 #define ARDUINO_SAMD_FEATHER_M0
 #define ARDUINO_ARCH_SAMD
 #define ARDUINO_SAMD_ZERO
