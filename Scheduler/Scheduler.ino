@@ -13,7 +13,7 @@
 void short_blink() {
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(20);
-	digitalWrite(LED_BUILTIN, LOW);
+	digitalWrite(LED_BUILTIN, LOW); // Test to commit
 	delay(20);
 }
 void long_blink() {
