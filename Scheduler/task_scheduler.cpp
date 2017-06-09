@@ -12,6 +12,7 @@
 #define SLEEP_MODE_PWR_DOWN 0
 #define set_sleep_mode(...)   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk
 #define sleep_enable(...) 
+#define sleep_disable(...) 
 #define sleep_cpu(...) do{__WFI();}while(0)
 #endif
 
@@ -47,17 +48,6 @@ void sched_setup(void) {
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module */
 	// Board setup
 
-	wdt_disable();
-	// Shut down unused peripherals
-	power_adc_disable();
-	power_twi_disable();
-	// power_timer0_disable(); // Used by "delay" and "millis", automatically shut down during sleep (except IDLE)
-	power_timer1_disable();
-	power_timer2_disable();
-	power_timer3_disable();
-	power_timer4_disable();  // Requires you to patch iom32u4.h -> add (#define PRTIM4 4) and (#define __AVR_HAVE_PRR1_PRTIM4) and add {| (1 << PRTIM4)} to the existing #define __AVR_HAVE_PRR1
-	power_usb_disable();
-
 	// We'll be using the Watchdog since it's always ON
 	// Configure the Watchdog for 1Hz interrupts
 	noInterrupts();
@@ -81,7 +71,6 @@ ISR(WDT_vect) { // Watchdog interrupt. Interrupt driven tick, called every 1s, u
 #endif
 #ifdef __SAMD21G18A__
 	// Board setup
-	USBDevice.standby();
 	
 	// Using the RTC module
 	// Enable clock source
@@ -165,8 +154,6 @@ uint8_t sched_add_task(void (*task)(void), int32_t delay, int32_t looptime) {
 
 void sched_mainloop(void) {
 	// Run tasks and go to sleep
-	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-	sleep_enable();
 	while (1) {
 		uint8_t i;
 		for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
@@ -179,6 +166,26 @@ void sched_mainloop(void) {
 				}
 			}
 		}
+		
+#ifdef _DEBUG
+		// Keep serial and USB working...
+		set_sleep_mode(SLEEP_MODE_IDLE);
+#else
+		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+#endif
+		
+		power_all_disable(); // Disable peripherals
+
+		sleep_enable();
 		sleep_cpu(); // Will wake up every 1s due to the WDT/RTC interrupt
-	}
+		sleep_disable();
+		interrupts();
+
+		power_all_enable(); // Enable peripherals
+
+		// "I'm alive"
+		digitalWrite(LED_BUILTIN, HIGH);
+		delay(1);
+		digitalWrite(LED_BUILTIN, LOW);
+	} // while(1)
 }
