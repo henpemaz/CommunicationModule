@@ -30,7 +30,7 @@
 #include "task_scheduler.h"
 #include "storage_manager.h"
 
-
+#include "sampling_task.h"
 
 ///////////// DEBUG
 void dummy_func() {
@@ -47,33 +47,47 @@ void dummy_func() {
 
 //#define gsm_comm_setup dummy_func
 //#define stor_setup dummy_func
-#define sampling_setup dummy_func
 #define reporting_setup dummy_func
-#define sampling_task dummy_func
 #define reporting_task dummy_func
+
 #define SAMPLING_LOOP_TIME 10
 #define REPORTING_LOOP_TIME 30
+
+#define db(val) Serial.println(val);
 ///////////// \DEBUG
 
 void setup()
 {
 	// Set up communication storage and box interface
+	Serial.begin(115200);
+	while (!Serial);
 
+	db("Starting");
+	db("gsm setup");
 	gsm_comm_setup();
 
+	db("storage setup");
 	stor_setup();
 
+	db("sampling setup");
 	sampling_setup();
 
+	db("reporting setup");
 	reporting_setup();
 
 	// Launch tasks
+	db("scheduler setup");
+	delay(100);
 	sched_setup();
 
+	db("scheduler add task");
 	sched_add_task(sampling_task, SAMPLING_LOOP_TIME, SAMPLING_LOOP_TIME);
 
+	db("scheduler add task");
 	sched_add_task(reporting_task, REPORTING_LOOP_TIME, REPORTING_LOOP_TIME);
 
+	db("scheduler mainloop");
+	delay(100);
 	sched_mainloop();
 }
 

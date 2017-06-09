@@ -11,3 +11,8 @@
 
 #endif
 
+void sampling_setup(void);
+
+void sampling_task(void);
+
+
