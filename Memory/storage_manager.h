@@ -35,6 +35,10 @@
 */
 void stor_setup(void);
 
+void stor_start(void);
+
+void stor_end(void);
+
 /*
 	Ce fonction va stocker un échantillon de données dans la mémoire à partir de la
 	première addresse qui est libre.

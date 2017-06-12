@@ -18,8 +18,10 @@ void setup() {
 	while (Serial.available() == 0);
 	Serial.println("Begin");
 
+#ifdef __SAMD21G18A__
 	pinMode(8, OUTPUT);
-	digitalWrite(8, HIGH); //disable radio device
+	digitalWrite(8, HIGH); //disable radio device to avoid conflicts
+#endif
 
 	stor_setup();
 }

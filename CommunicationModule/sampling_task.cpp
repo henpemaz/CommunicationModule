@@ -8,26 +8,22 @@
 
 #define SAMPLE_SIZE 18
 
-#define db(val) Serial.println(val)
+#ifdef _DEBUG
+#define db(val) Serial.print("sampling: ") + Serial.println(val)
+#else
+#define db(val) 
+#endif
 
 void sampling_setup(void) {
-
-
-
-
-
-
-
+	db("Setup");
 
 
 
 }
 
-void sampling_task(void) {
-	Serial.begin(115200);
-	//while (!Serial);
-	delay(100);
-	db("Running Sampling task");
+inline void get_data_from_box(uint8_t *buffer) {
+	db("Getting data from box");
+
 	// (Re)Configure serial interface to the box
 	// TODO
 
@@ -35,20 +31,32 @@ void sampling_task(void) {
 	// TODO
 
 	db("Generating dummy data");
-	uint8_t buff[SAMPLE_SIZE];
 	for (uint8_t i = 0; i < SAMPLE_SIZE; i++) {
-		buff[i] = i + 'a';
+		buffer[i] = i + 'a';
 	}
+}
 
+void sampling_task(void) {
+	//while (!Serial);
+	Serial.begin(115200);
+	delay(100);
+	db("Running Sampling task");
+
+	uint8_t buff[SAMPLE_SIZE];
+	get_data_from_box(buff);
+
+	// Start the EEPROM
+	stor_start();
 	// Store this sample to the external eeprom
 	db("Writting sample to database");
-	db("Available to read before :");
-	db(stor_available());
 	stor_write_sample(buff);
-	db("Available to read after :");
-	db(stor_available());
+
+	stor_end();
 
 	delay(100);
+
+	// Go back to sleep
+	db("end");
 }
 
 

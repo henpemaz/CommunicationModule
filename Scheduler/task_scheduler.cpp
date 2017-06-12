@@ -16,6 +16,13 @@
 #define sleep_cpu(...) do{__WFI();}while(0)
 #endif
 
+#ifdef _DEBUG
+#define db(val) Serial.print("sched: ") + Serial.println(val)
+#else
+#define db(val) 
+#endif
+
+
 /*
 	Simple scheduler
 	1Hz tick interruption updates the timers
@@ -38,6 +45,7 @@ struct task_handle task_list[SCHED_MAX_TASKS];
 inline void tick_callback(void);
 
 void sched_setup(void) {
+	db("Setup");
 	// Structure setup
 	uint8_t i;
 	for (i = 0; i < SCHED_MAX_TASKS; i++) {
@@ -133,6 +141,7 @@ inline void tick_callback(void) {
 
 
 uint8_t sched_add_task(void (*task)(void), int32_t delay, int32_t looptime) {
+	db("Add task");
 	uint8_t i;
 	// Add to list
 	noInterrupts(); // Atomic access to the task list
@@ -153,6 +162,7 @@ uint8_t sched_add_task(void (*task)(void), int32_t delay, int32_t looptime) {
 }
 
 void sched_mainloop(void) {
+	db("Mainloop");
 	// Run tasks and go to sleep
 	while (1) {
 		uint8_t i;

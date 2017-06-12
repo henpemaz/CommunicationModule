@@ -1,6 +1,12 @@
 #include "storage_manager.h"
 #include <SPI.h>
 
+#ifdef _DEBUG
+#define db(val) Serial.print("stor: ") + Serial.println(val)
+#else
+#define db(val) 
+#endif
+
 // pins
 #define DATAOUT MOSI//MOSI
 #define DATAIN  MISO//MISO
@@ -34,19 +40,23 @@ void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len);
 void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len);
 
 /*
-	Set up memory interface
+	Set up memory interface, configure interfaces and pins
 */
 void stor_setup(void) {
-	SPI.begin();
-
-	pinMode(8, OUTPUT);
-	digitalWrite(8, HIGH); //disable radio device to avoid conflicts
-
+	db("Setup");
 	pinMode(SLAVESELECT, OUTPUT);
 	digitalWrite(SLAVESELECT, HIGH); //disable device
+}
 
-									 //erase device
-	stor_erase_eeprom();
+void stor_start(void) {
+	db("Start");
+	SPI.begin();
+}
+
+void stor_end(void) {
+	db("End");
+	while (memory_is_busy());
+	SPI.end();
 }
 
 /*
@@ -55,6 +65,7 @@ void stor_setup(void) {
 */
 void stor_write_sample(uint8_t *data)
 {
+	db("Write sample");
 	write_eeprom(data, adr_ecr, SAMPLE_SIZE);
 	adr_ecr += SAMPLE_SIZE;
 }
@@ -65,6 +76,7 @@ void stor_write_sample(uint8_t *data)
 */
 uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen)
 {
+	db("Read sample");
 	uint16_t len = min(stor_available(), maxlen);
 
 	read_eeprom(buffer, adr_lir, len);
@@ -75,6 +87,7 @@ uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen)
 
 void stor_confirm_read(bool do_commit)
 {
+	db("Confirm read");
 	if (do_commit)
 	{
 		adr_lir_committed = adr_lir;
@@ -88,6 +101,7 @@ void stor_confirm_read(bool do_commit)
 
 uint16_t stor_available(void)
 {
+	db("Query available");
 	if (adr_ecr >= adr_lir)
 	{
 		return adr_ecr - adr_lir;
@@ -101,6 +115,7 @@ uint16_t stor_available(void)
 
 void stor_erase_eeprom()
 {
+	db("Erase");
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(WREN); //write enable
 	digitalWrite(SLAVESELECT, HIGH);

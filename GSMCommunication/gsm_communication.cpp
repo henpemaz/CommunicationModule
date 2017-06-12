@@ -2,7 +2,13 @@
 
 #include <SoftwareSerial.h>
 
-#define db(str) Serial.print(str);
+#ifdef _DEBUG
+#define db(val) Serial.print("gsm_comm: ") + Serial.println(val)
+#define db_noline(val) Serial.print(val)
+#else
+#define db(val) 
+#define db_noline(val) 
+#endif
 
 #define SIM_POWER 2
 #define SIM_RESET 7
@@ -34,6 +40,7 @@ extern const char ok_reply[] = "\r\nOK\r\n";
 
 
 enum comm_status_code gsm_comm_setup(void) {
+	db("Setup");
 	// Configure pins
 	digitalWrite(SIM_RESET, HIGH);
 	pinMode(SIM_RESET, OUTPUT);
@@ -66,6 +73,7 @@ inline void flush_input(void) {
 
 #define MAX_AT_TRIES 10 // Each try = 100ms 
 enum comm_status_code power_on(void) {
+	db("Power on");
 	// Power on
 	digitalWrite(SIM_POWER, LOW);
 	delay(1000);
@@ -90,6 +98,7 @@ enum comm_status_code power_on(void) {
 }
 
 enum comm_status_code power_off(void) {
+	db("Power off");
 	enum comm_status_code code = get_reply("AT+CPOWD=1", "NORMAL POWER DOWN", 2000);
 	if (code == COMM_OK) {
 		delay(1000);
@@ -110,16 +119,14 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 
 	if (tosend) {
 		sim_serial.println((const char*)tosend);
-		db("\n>>>");
-		db((const char*)tosend);
-		db("\n");
+		db(String("\n>>>").concat((const char*)tosend));		
 	}
-
+	db("<<<");
 	while (timeout > 0) {
 
 		while (sim_serial.available()) {
 			reply = sim_serial.read();
-			db((char)reply);
+			db_noline((char)reply);
 			if (reply != expected_reply[reply_index]) { // No match, break sequence
 				reply_index = 0;
 				if (reply != expected_reply[reply_index]) { // No match on new sequence
@@ -128,22 +135,25 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 			}
 			reply_index++;  // Match
 			if (expected_reply[reply_index] == 0x00) {  // End sequence
+				db(""); // end line
 				return COMM_OK;
 			}
 		}
 		delay(1);
 		timeout--;
 	}
+	db(""); // end line
 	return COMM_ERR_RETRY;
 }
 
 enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
+	db("Start report");
 	uint16_t timeout;
 	timeout = 60000;  // timeout for GPRS connection
 
 	// Power on
 	if (!module_is_on && power_on() != COMM_OK) return COMM_ERR_RETRY;
-
+	db("Module is on");
 	// While not connection timeout
 	while (timeout > 0) {
 		// Querry GPRS availability
@@ -197,6 +207,7 @@ enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 
 
 enum comm_status_code gsm_comm_fill_report(const uint8_t *buffer, int lenght) {
+	db("Fill report");
 	sim_serial.write(buffer, lenght);  // Write binary data to serial
 	return COMM_OK;
 }
