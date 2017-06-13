@@ -21,7 +21,7 @@ Define DB_MODULE before including the file to get the module name to show up
 #define db_print(val) do{Serial.print(val);}while(0)
 #define db_println(val) do{Serial.println(val);}while(0)
 
-#define db_module(...) do{db_print(DB_MODULE); db_print(" :");}while(0)
+#define db_module(...) do{db_print(DB_MODULE); db_print(": ");}while(0)
 #define db(val) do{db_module(); db_println(val);}while(0)
 #else
 #define db_start(...)

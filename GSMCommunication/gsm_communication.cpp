@@ -62,7 +62,7 @@ inline void flush_input(void) {
 	delay(100);
 	while (sim_serial.available()) {
 		c = sim_serial.read();
-		db(c);
+		db_print(c);
 	}
 }
 
@@ -114,7 +114,7 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 
 	if (tosend) {
 		sim_serial.println((const char*)tosend);
-		db(String("\n>>>").concat((const char*)tosend));		
+		db(String("\n>>>")+((const char*)tosend));		
 	}
 	db_print("<<<");
 	while (timeout > 0) {
