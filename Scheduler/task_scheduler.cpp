@@ -16,11 +16,8 @@
 #define sleep_cpu(...) do{__WFI();}while(0)
 #endif
 
-#ifdef _DEBUG
-#define db(val) Serial.print("sched: ") + Serial.println(val)
-#else
-#define db(val) 
-#endif
+#define DB_MODULE "Scheduler"
+#include "debug.h"
 
 
 /*
@@ -165,6 +162,7 @@ void sched_mainloop(void) {
 	db("Mainloop");
 	// Run tasks and go to sleep
 	while (1) {
+		db("Running tasks");
 		uint8_t i;
 		for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
 			if (task_list[i].task != NULL) {
@@ -176,7 +174,7 @@ void sched_mainloop(void) {
 				}
 			}
 		}
-		
+		db("Entering sleep mode");
 #ifdef _DEBUG
 		// Keep serial and USB working...
 		set_sleep_mode(SLEEP_MODE_IDLE);
@@ -192,6 +190,8 @@ void sched_mainloop(void) {
 		interrupts();
 
 		power_all_enable(); // Enable peripherals
+
+		db_start();
 
 		// "I'm alive"
 		digitalWrite(LED_BUILTIN, HIGH);

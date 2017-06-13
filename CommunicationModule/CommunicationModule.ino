@@ -2,8 +2,8 @@
 #include <SoftwareSerial.h>
 
 
-
-
+#define DB_MODULE "Communication Module"
+#include "debug.h"
 
 
 // NOTE : Define either GSM or LORA on the project settings !
@@ -52,15 +52,11 @@ void dummy_func() {
 
 #define SAMPLING_LOOP_TIME 10
 #define REPORTING_LOOP_TIME 30
-
-#define db(val) Serial.println(val);
 ///////////// \DEBUG
 
 void setup()
 {
-	// Set up communication storage and box interface
-	Serial.begin(115200);
-	while (!Serial);
+	db_start();
 
 	db("Starting");
 	db("gsm setup");

@@ -2,13 +2,8 @@
 
 #include <SoftwareSerial.h>
 
-#ifdef _DEBUG
-#define db(val) Serial.print("gsm_comm: ") + Serial.println(val)
-#define db_noline(val) Serial.print(val)
-#else
-#define db(val) 
-#define db_noline(val) 
-#endif
+#define DB_MODULE "GSM Comm"
+#include "debug.h"
 
 #define SIM_POWER 2
 #define SIM_RESET 7
@@ -31,7 +26,6 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 inline void flush_input(void);
 
 #define UITOA_BUFFER_SIZE 6
-///<summary>Custom itoa base 10 function, up to 5 digits, small footprint</summary>
 void uitoa(uint16_t val, uint8_t *buff);
 
 bool module_is_on;
@@ -52,11 +46,6 @@ enum comm_status_code gsm_comm_setup(void) {
 	sim_serial.begin(9600);
 
 	gsm_comm_abort(); // Force a hardware reset and shut down the module
-	//module_is_on = true;
-	//if (get_reply("AT", ok_reply, 500) == COMM_OK) {  // AT to check if the module is ON
-	//	power_off();
-	//}
-	//module_is_on = false;
 
 	flush_input();
 	return COMM_OK;
@@ -121,12 +110,12 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 		sim_serial.println((const char*)tosend);
 		db(String("\n>>>").concat((const char*)tosend));		
 	}
-	db("<<<");
+	db_print("<<<");
 	while (timeout > 0) {
 
 		while (sim_serial.available()) {
 			reply = sim_serial.read();
-			db_noline((char)reply);
+			db_print((char)reply);
 			if (reply != expected_reply[reply_index]) { // No match, break sequence
 				reply_index = 0;
 				if (reply != expected_reply[reply_index]) { // No match on new sequence
@@ -135,14 +124,14 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 			}
 			reply_index++;  // Match
 			if (expected_reply[reply_index] == 0x00) {  // End sequence
-				db(""); // end line
+				db_println(""); // end line
 				return COMM_OK;
 			}
 		}
 		delay(1);
 		timeout--;
 	}
-	db(""); // end line
+	db_println(""); // end line
 	return COMM_ERR_RETRY;
 }
 
@@ -155,6 +144,7 @@ enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 	if (!module_is_on && power_on() != COMM_OK) return COMM_ERR_RETRY;
 	db("Module is on");
 	// While not connection timeout
+	db("Attempting connection");
 	while (timeout > 0) {
 		// Querry GPRS availability
 		flush_input();
@@ -167,41 +157,44 @@ enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 	// If timeout
 	if (timeout == 0) {
 		// Shutdown
+		db("Connection timeout");
 		power_off();
 		return COMM_ERR_RETRY_LATER;
 	}
 
+	db("Connection stablished");
 	// GPRS available
 
 	delay(1000);
-	flush_input();
+	flush_input(); // Dismiss unrequested messages
+	db("Configuring APN");
 	if (get_reply("AT+SAPBR=3,1,\"Contype\", \"GPRS\"", ok_reply, 200) != COMM_OK
 		|| get_reply("AT+SAPBR=3,1,\"APN\", \"" SIM_APN "\"", ok_reply, 200) != COMM_OK
 		|| get_reply("AT+SAPBR=3,1,\"USER\", \"" SIM_USER "\"", ok_reply, 200) != COMM_OK
 		|| get_reply("AT+SAPBR=3,1,\"PWD\", \"" SIM_PWD "\"", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=1,1", ok_reply, 10000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
-
+		|| get_reply("AT+SAPBR=1,1", ok_reply, 30000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
+		db("Failed to configure APN");
 		return COMM_ERR_RETRY;
 	}
-
 	flush_input();
+	db("Configuring HTTP module");
 	if (get_reply("AT+HTTPINIT", ok_reply, 200) != COMM_OK
 		|| get_reply("AT+HTTPPARA=\"CID\",1", ok_reply, 200) != COMM_OK
 		|| get_reply("AT+HTTPPARA=\"URL\",\"" POST_URL "\"", ok_reply, 200) != COMM_OK) {
-
+		db("Failed to configure HTTP module");
 		return COMM_ERR_RETRY;
 	}
-
 	flush_input();
+	db("Starting HTTPDATA session");
 	sim_serial.print("AT+HTTPDATA=");  // Start data session
 	uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
-	uitoa(totallen, lenght_buffer);
+	uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
 	sim_serial.print((char*)lenght_buffer);  // <totallen> bytes to send
 	if (get_reply(",60000", "\r\nDOWNLOAD\r\n", 1000) != COMM_OK) {  // POST data transmission, timeout 60 secs
-
+		db("Failed to start DATA session");
 		return COMM_ERR_RETRY;
 	}
-
+	db("DATA session started");
 	return COMM_OK;
 }
 
@@ -209,22 +202,24 @@ enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 enum comm_status_code gsm_comm_fill_report(const uint8_t *buffer, int lenght) {
 	db("Fill report");
 	sim_serial.write(buffer, lenght);  // Write binary data to serial
+	db_module() + db_print(lenght) + db_println(" bytes of data sent");
 	return COMM_OK;
 }
 
 
 enum comm_status_code gsm_comm_send_report(void) {
+	db("Send Report");
 	flush_input();
 	if (get_reply("AT+HTTPACTION=1", ok_reply, 500) != COMM_OK) { // Do POST
-		db("\ncomm_send_report: no ok\n");
+		db("POST action failed");
 		return COMM_ERR_RETRY;
 	}
 	if (get_reply(NULL, "+HTTPACTION: 1,", 60000) != COMM_OK) { // Send nothing, wait for the +httaction response
-		db("\ncomm_send_report: no +httpaction\n");                            // somehow no http timeout ???
+		db("Module did not respond");                            // somehow no http timeout ???
 		return COMM_ERR_RETRY;
 	}
-
-	char http_code[3];
+	db("Got answer from server");
+	char http_code[4];
 	while (!sim_serial.available())delay(1);
 	http_code[0] = sim_serial.read();
 	while (!sim_serial.available())delay(1);
@@ -232,8 +227,11 @@ enum comm_status_code gsm_comm_send_report(void) {
 	while (!sim_serial.available())delay(1);
 	http_code[2] = sim_serial.read();
 
-	get_reply("AT+HTTPTERM", ok_reply, 500);
-	//get_reply("AT+SAPBR=0,1", ok_reply, 500);
+	http_code[3] = 0;
+	db_module() + db_print("HTTP code : ") + db_println(http_code);
+
+	get_reply("AT+HTTPTERM", ok_reply, 500);  // No error handling
+	//get_reply("AT+SAPBR=0,1", ok_reply, 500);  // We don't really have to, happens on shutdown 
 
 	power_off();
 
@@ -241,12 +239,12 @@ enum comm_status_code gsm_comm_send_report(void) {
 		return COMM_OK;
 	}
 
-	db("\ncomm_send_report: network error\n");
 	return COMM_ERR_RETRY_LATER;
 }
 
 
 enum comm_status_code gsm_comm_abort(void) {
+	db("Abort");
 	if (get_reply("AT", ok_reply, 100) != COMM_OK) { // Module stuck
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
@@ -258,6 +256,7 @@ enum comm_status_code gsm_comm_abort(void) {
 	return power_off();
 }
 
+// Custom uitoa, fixed base, expects buffer of the right size
 void uitoa(uint16_t val, uint8_t *buff) {
 	uint8_t i;
 	// Common exception
@@ -269,9 +268,9 @@ void uitoa(uint16_t val, uint8_t *buff) {
 
 	// Do the magic
 	i = UITOA_BUFFER_SIZE - 1;
-	buff[i] = 0;
+	buff[i] = 0;  // From the tail, we'll go towards the head
 	while (val) {
-		buff[--i] = 48 + val % 10;
+		buff[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
 		val /= 10;
 	}
 

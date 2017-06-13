@@ -1,11 +1,8 @@
 #include "storage_manager.h"
 #include <SPI.h>
 
-#ifdef _DEBUG
-#define db(val) Serial.print("stor: ") + Serial.println(val)
-#else
-#define db(val) 
-#endif
+#define DB_MODULE "Storage"
+#include "debug.h"
 
 // pins
 #define DATAOUT MOSI//MOSI
