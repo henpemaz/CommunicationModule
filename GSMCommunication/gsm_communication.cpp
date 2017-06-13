@@ -96,7 +96,7 @@ enum comm_status_code power_off(void) {
 	db("Power off");
 	enum comm_status_code code = get_reply("AT+CPOWD=1", "NORMAL POWER DOWN", 2000);
 	if (code == COMM_OK) {
-		delay(1000);
+		delay(1200);
 		flush_input();
 		module_is_on = false;
 	}
@@ -251,13 +251,13 @@ enum comm_status_code gsm_comm_send_report(void) {
 
 enum comm_status_code gsm_comm_abort(void) {
 	db("Abort");
-	if (get_reply("AT", ok_reply, 100) != COMM_OK) { // Module stuck
+	if (get_reply("AT", ok_reply, 200) != COMM_OK) { // Module stuck
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
 		digitalWrite(SIM_RESET, HIGH);
-		delay(1000);
+		delay(1200);
 		power_on();
-		delay(2000);
+		delay(3000);
 	}
 	return power_off();
 }

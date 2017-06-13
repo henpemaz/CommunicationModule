@@ -38,7 +38,7 @@ inline void get_data_from_box(uint8_t *buffer) {
 void sampling_task(void) {
 	db("Running Sampling task");
 
-	// Start the EEPROM
+	// Start the EEPROM SPI
 	stor_start();
 	
 	// Get sample data
@@ -48,6 +48,7 @@ void sampling_task(void) {
 	// Store this sample to the external eeprom
 	db("Writting sample to database");
 	stor_write_sample(buff);
+
 	stor_end();
 
 	// Go back to sleep

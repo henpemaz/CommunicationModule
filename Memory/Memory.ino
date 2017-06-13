@@ -10,10 +10,9 @@
 
 void setup() {
 
-	//while (!Serial);
 	Serial.begin(115200);
-	
-	while (Serial.available() == 0);
+	while (!Serial);
+
 	Serial.println("Begin");
 
 #ifdef __SAMD21G18A__
@@ -22,10 +21,11 @@ void setup() {
 #endif
 
 	stor_setup();
+	stor_start();
 }
 
 void loop() {
-
+	delay(1000);
 	int maxlen = 148;
 	byte buf[148];
 	for (int I = 0; I<maxlen; I++)
