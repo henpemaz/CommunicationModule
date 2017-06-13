@@ -15,24 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Scheduler.ino" />
+    <None Include="DebugDefines.ino" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.Scheduler.vsarduino.h">
+    <ClInclude Include="__vm\.DebugDefines.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="task_scheduler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DebugDefines\debug.h">
+    <ClInclude Include="debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="task_scheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DebugDefines\debug.cpp">
+    <ClCompile Include="debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

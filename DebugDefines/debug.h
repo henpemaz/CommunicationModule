@@ -1,11 +1,14 @@
+// debug.h
+
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
+#include "Arduino.h"
 
 /*
-	Debug
+Debug
 
-	Some debug code that magically disappears at release !
-	Define DB_MODULE before including the file to get the module name to show up
+Some debug code that magically disappears at release !
+Define DB_MODULE before including the file to get the module name to show up
 
 */
 
@@ -32,3 +35,5 @@
 
 
 #endif // !_DEBUG_H_
+
+

@@ -1,9 +1,13 @@
-#include "gsm_communication.h"
-
-#include <SoftwareSerial.h>
+// 
+// 
+// 
 
 #define DB_MODULE "GSM Comm"
 #include "debug.h"
+
+#include "gsm_communication.h"
+#include <SoftwareSerial.h>
+
 
 #define SIM_POWER 2
 #define SIM_RESET 7

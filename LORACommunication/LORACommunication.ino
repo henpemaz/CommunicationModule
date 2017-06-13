@@ -2,12 +2,10 @@
 
 
 
-
-
-
-
-
 #include "lora_communication.h"
+
+#define DB_MODULE "LORA Communication"
+#include "debug.h"
 
 
 void setup()

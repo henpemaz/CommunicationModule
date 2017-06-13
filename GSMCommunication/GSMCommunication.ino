@@ -11,7 +11,9 @@
 
 
 
-#define db(str) Serial.print(str);
+#define DB_MODULE "GSM Communication"
+#include "debug.h"
+
 
 void setup() {
 	const char report_string[] = "Hello World, this is FONA";

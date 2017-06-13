@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 
 
 
@@ -9,6 +5,8 @@
 
 #include "storage_manager.h"
 
+#define DB_MODULE "Memory"
+#include "debug.h"
 
 void setup() {
 
@@ -29,7 +27,6 @@ void setup() {
 void loop() {
 
 	int maxlen = 148;
-	int address = 0;
 	byte buf[148];
 	for (int I = 0; I<maxlen; I++)
 	{

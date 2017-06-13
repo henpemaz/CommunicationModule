@@ -24,9 +24,15 @@
     <ClInclude Include="storage_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\DebugDefines\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="storage_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DebugDefines\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

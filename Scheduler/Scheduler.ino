@@ -9,6 +9,8 @@
 
 #include "task_scheduler.h"
 
+#define DB_MODULE "Scheduler"
+#include "debug.h"
 
 void short_blink() {
 	digitalWrite(LED_BUILTIN, HIGH);

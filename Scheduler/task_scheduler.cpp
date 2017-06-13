@@ -1,5 +1,8 @@
 #include "task_scheduler.h"
 
+#define DB_MODULE "Scheduler"
+#include "debug.h"
+
 #ifdef __AVR_ATmega32U4__ /* Using ATmega32u4 - GSM module - Watchdog used for sleep management*/
 #include <avr/wdt.h>
 #include <avr/sleep.h>
@@ -16,8 +19,7 @@
 #define sleep_cpu(...) do{__WFI();}while(0)
 #endif
 
-#define DB_MODULE "Scheduler"
-#include "debug.h"
+
 
 
 /*

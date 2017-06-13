@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CommunicationModule", "Comm
 		{446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA} = {446EB7B9-9DEE-4D7B-B99B-C60CE16F6EAA}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DebugDefines", "DebugDefines\DebugDefines.vcxproj", "{804D58DD-9065-48C6-8D6E-2DEDB52DFADF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -45,6 +47,10 @@ Global
 		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Debug|x86.Build.0 = Debug|Win32
 		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Release|x86.ActiveCfg = Release|Win32
 		{ECB975A0-7FB0-48C9-AFF0-391D52DDF87A}.Release|x86.Build.0 = Release|Win32
+		{804D58DD-9065-48C6-8D6E-2DEDB52DFADF}.Debug|x86.ActiveCfg = Debug|Win32
+		{804D58DD-9065-48C6-8D6E-2DEDB52DFADF}.Debug|x86.Build.0 = Debug|Win32
+		{804D58DD-9065-48C6-8D6E-2DEDB52DFADF}.Release|x86.ActiveCfg = Release|Win32
+		{804D58DD-9065-48C6-8D6E-2DEDB52DFADF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
