@@ -2,11 +2,13 @@
 // 
 // 
 
+#include "gsm_communication.h"
+#include <SoftwareSerial.h>
+
 #define DB_MODULE "GSM Comm"
 #include "debug.h"
 
-#include "gsm_communication.h"
-#include <SoftwareSerial.h>
+
 
 
 #define SIM_POWER 2
@@ -206,7 +208,7 @@ enum comm_status_code gsm_comm_start_report(uint16_t totallen) {
 enum comm_status_code gsm_comm_fill_report(const uint8_t *buffer, int lenght) {
 	db("Fill report");
 	sim_serial.write(buffer, lenght);  // Write binary data to serial
-	db_module() + db_print(lenght) + db_println(" bytes of data sent");
+	db_module(); db_print(lenght); db_println(" bytes of data sent");
 	return COMM_OK;
 }
 
@@ -232,7 +234,7 @@ enum comm_status_code gsm_comm_send_report(void) {
 	http_code[2] = sim_serial.read();
 
 	http_code[3] = 0;
-	db_module() + db_print("HTTP code : ") + db_println(http_code);
+	db_module(); db_print("HTTP code : "); db_println(http_code);
 
 	get_reply("AT+HTTPTERM", ok_reply, 500);  // No error handling
 	//get_reply("AT+SAPBR=0,1", ok_reply, 500);  // We don't really have to, happens on shutdown 

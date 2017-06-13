@@ -21,15 +21,15 @@
     <ClInclude Include="__vm\.GSMCommunication.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DebugDefines\debug.h">
+    <ClInclude Include="..\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gsm_communication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DebugDefines\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

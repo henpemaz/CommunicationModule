@@ -36,7 +36,7 @@
     <ClInclude Include="sampling_task.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DebugDefines\debug.h">
+    <ClInclude Include="debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -54,9 +54,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sampling_task.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DebugDefines\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
