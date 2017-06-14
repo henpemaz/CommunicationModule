@@ -41,14 +41,6 @@ void dummy_func() {
 	digitalWrite(LED_BUILTIN, LOW);
 	delay(1000);
 }
-
-//#define comm_setup dummy_func
-//#define stor_setup dummy_func
-#define reporting_setup dummy_func
-#define reporting_task dummy_func
-
-#define SAMPLING_LOOP_TIME 10
-#define REPORTING_LOOP_TIME 30
 ///////////// \DEBUG
 
 void setup()
@@ -74,10 +66,10 @@ void setup()
 	sched_setup();
 
 	db("scheduler add task");
-	sched_add_task(sampling_task, SAMPLING_LOOP_TIME, SAMPLING_LOOP_TIME);
+	sched_add_task(sampling_task, SAMPLING_LOOPTIME, SAMPLING_LOOPTIME);
 
 	db("scheduler add task");
-	sched_add_task(reporting_task, REPORTING_LOOP_TIME, REPORTING_LOOP_TIME);
+	sched_add_task(reporting_task, REPORTING_LOOPTIME, REPORTING_LOOPTIME);
 
 	db("scheduler mainloop");
 	delay(100);

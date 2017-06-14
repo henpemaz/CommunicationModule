@@ -3,12 +3,14 @@
 // 
 
 #include "communication.h"
+
+#ifdef __AVR_ATmega32U4__
+
+
 #include <SoftwareSerial.h>
 
 #define DB_MODULE "GSM Comm"
 #include "debug.h"
-
-
 
 
 #define SIM_POWER 2
@@ -47,20 +49,21 @@ enum comm_status_code comm_setup(void) {
 
 	digitalWrite(SIM_POWER, HIGH);
 	pinMode(SIM_POWER, OUTPUT);
-
 	// Start Serial
+	db("starting serial");
 	sim_serial.begin(9600);
 
 	comm_abort(); // Force a hardware reset and shut down the module
 
 	flush_input();
+
 	return COMM_OK;
 }
 
 inline void flush_input(void) {
 	char c;
 	delay(100);
-	while (sim_serial.available()) {
+	while (sim_serial.available() > 0) {
 		c = sim_serial.read();
 		db_print(c);
 	}
@@ -69,11 +72,12 @@ inline void flush_input(void) {
 #define MAX_AT_TRIES 10 // Each try = 100ms 
 enum comm_status_code power_on(void) {
 	db("Power on");
+
 	// Power on
 	digitalWrite(SIM_POWER, LOW);
 	delay(1000);
 	digitalWrite(SIM_POWER, HIGH);
-	// Open communication
+
 	delay(500); // Module takes on average 2.5s on boot
 
 	uint8_t tries = 0;
@@ -82,7 +86,7 @@ enum comm_status_code power_on(void) {
 		// AT baud synchronism
 		flush_input();
 		if (get_reply("AT", ok_reply, 100) == COMM_OK) {  // AT OK
-			delay(100);
+			delay(200);
 			get_reply("ATE0", ok_reply, 100); // Disable echo
 			module_is_on = true;
 			return COMM_OK;
@@ -113,8 +117,10 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 	reply_index = 0;
 
 	if (tosend) {
+		db_module();
+		db_print(">>>");
+		db_println((const char*)tosend);
 		sim_serial.println((const char*)tosend);
-		db(String("\n>>>")+((const char*)tosend));		
 	}
 	db_print("<<<");
 	while (timeout > 0) {
@@ -143,11 +149,20 @@ enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_r
 
 enum comm_status_code comm_start_report(uint16_t totallen) {
 	db("Start report");
+
+	// Start Serial
+	db("starting serial");
+	sim_serial.begin(9600);
+
 	uint16_t timeout;
 	timeout = 60000;  // timeout for GPRS connection
 
 	// Power on
-	if (!module_is_on && power_on() != COMM_OK) return COMM_ERR_RETRY;
+	if (!module_is_on) {
+		if (power_on() != COMM_OK) {
+			return COMM_ERR_RETRY;
+		}
+	}
 	db("Module is on");
 	// While not connection timeout
 	db("Attempting connection");
@@ -255,7 +270,7 @@ enum comm_status_code comm_abort(void) {
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
 		digitalWrite(SIM_RESET, HIGH);
-		delay(1200);
+		delay(2000);
 		power_on();
 		delay(3000);
 	}
@@ -283,3 +298,14 @@ void uitoa(uint16_t val, uint8_t *buff) {
 	// Left shift the result (remove padding)
 	if (i) do { buff[0] = buff[i]; } while (*(buff++) != 0);
 }
+
+
+
+
+
+
+
+
+
+
+#endif // AVR
