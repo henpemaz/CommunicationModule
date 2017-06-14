@@ -1,5 +1,5 @@
 
-#include "lora_communication.h"
+#include "communication.h"
 
 #define DB_MODULE "LORA Comm"
 #include "debug.h"

@@ -7,7 +7,7 @@
 
 
 #define __GSM_TEST__
-#include "gsm_communication.h"
+#include "communication.h"
 
 
 
@@ -24,7 +24,7 @@ void setup() {
 
 	db("\nCommunication module test\n");
 
-	enum comm_status_code code = gsm_comm_setup();
+	enum comm_status_code code = comm_setup();
 
 	db("\nsetup return code :");
 	db(code);
@@ -55,7 +55,7 @@ void setup() {
 	}
 
 	db("\ncomm abort\n");
-	code = gsm_comm_abort();
+	code = comm_abort();
 	db("\n comm abort return code :");
 	db(code);
 	db("\n");
@@ -71,7 +71,7 @@ void setup() {
 	unsigned long report_start_time = millis();
 
 	db("\nstart report\n");
-	code = gsm_comm_start_report(strlen(report_string));
+	code = comm_start_report(strlen(report_string));
 	db("\nstart report return code :");
 	db(code);
 	db("\n");
@@ -79,7 +79,7 @@ void setup() {
 	unsigned long report_fill_time = millis();
 
 	db("\nfill report\n");
-	code = gsm_comm_fill_report((const uint8_t *)report_string, strlen(report_string));
+	code = comm_fill_report((const uint8_t *)report_string, strlen(report_string));
 	db("\nfill return code :");
 	db(code);
 	db("\n");
@@ -87,7 +87,7 @@ void setup() {
 	unsigned long report_send_time = millis();
 
 	db("\nsend report\n");
-	code = gsm_comm_send_report();
+	code = comm_send_report();
 	db("\nsend report return code :");
 	db(code);
 	db("\n");

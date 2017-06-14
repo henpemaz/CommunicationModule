@@ -21,12 +21,6 @@
     <ClInclude Include="__vm\.CommunicationModule.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\GSMCommunication\gsm_communication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\LORACommunication\lora_communication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Memory\storage_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -40,6 +34,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="reporting_task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="communication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

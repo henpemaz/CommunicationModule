@@ -82,10 +82,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\GSMCommunication\gsm_communication.h" />
-    <ClInclude Include="..\LORACommunication\lora_communication.h" />
     <ClInclude Include="..\Memory\storage_manager.h" />
     <ClInclude Include="..\Scheduler\task_scheduler.h" />
+    <ClInclude Include="communication.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="reporting_task.h" />
     <ClInclude Include="sampling_task.h" />

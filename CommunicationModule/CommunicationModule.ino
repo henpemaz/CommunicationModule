@@ -1,6 +1,4 @@
-#include "reporting_task.h"
 #include <SPI.h>
-#include "sampling_task.h"
 #include <SoftwareSerial.h>
 
 
@@ -14,25 +12,22 @@
 #ifndef __AVR_ATmega32U4__
 #error Wrong board !
 #endif
-
-#include "gsm_communication.h"
-
 #endif
 
 #ifdef LORA
 #ifndef __SAMD21G18A__
 #error Wrong board !
 #endif
-
-#include "lora_communication.h"
-
 #endif
 
+#include "communication.h"
 
 #include "task_scheduler.h"
 #include "storage_manager.h"
 
 #include "sampling_task.h"
+#include "reporting_task.h"
+
 
 ///////////// DEBUG
 void dummy_func() {
@@ -47,7 +42,7 @@ void dummy_func() {
 	delay(1000);
 }
 
-//#define gsm_comm_setup dummy_func
+//#define comm_setup dummy_func
 //#define stor_setup dummy_func
 #define reporting_setup dummy_func
 #define reporting_task dummy_func
@@ -62,7 +57,7 @@ void setup()
 
 	db("Starting");
 	db("gsm setup");
-	gsm_comm_setup();
+	comm_setup();
 
 	db("storage setup");
 	stor_setup();
