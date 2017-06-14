@@ -6,6 +6,9 @@
 #include "arduino.h"
 
 
+void reporting_setup(void);
+
+void reporting_task(void);
 
 
 
