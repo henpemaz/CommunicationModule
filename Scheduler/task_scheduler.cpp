@@ -164,21 +164,24 @@ void sched_mainloop(void) {
 	db("Mainloop");
 	// Run tasks and go to sleep
 	while (1) {
-		db("Running tasks");
 		uint8_t i;
 		for (i = 0; i < SCHED_MAX_TASKS; i++) { // For every (valid) task
-			if (task_list[i].task != NULL) {
-				while (task_list[i].delay <= 0) {  // If it can be run
-					task_list[i].task();  // Run task
-					noInterrupts(); // Atomic access to the task delay
+			if (task_list[i].task != NULL && task_list[i].delay <= 0) {  // If it can be run
+
+				task_list[i].task();  // Run task
+
+				noInterrupts(); // Atomic access to the task delay
+				if (task_list[i].looptime > 0) { // Cyclic
 					task_list[i].delay += task_list[i].looptime;
-					interrupts(); // End of atomic
 				}
+				else { // One-shot
+					task_list[i].task = NULL;
+				}
+				interrupts(); // End of atomic
 			}
 		}
-		db("Entering sleep mode");
 #ifdef _DEBUG
-		// Keep serial and USB working...
+		// Keep USB serial working...
 		set_sleep_mode(SLEEP_MODE_IDLE);
 #else
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
