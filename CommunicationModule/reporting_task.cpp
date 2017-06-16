@@ -55,7 +55,7 @@ void reporting_task(void){
 		totallen = MAX_SAMPLES_PER_REPORT;
 		samples_remaining = true;
 	}
-	db("got samples");
+	db("got amount of samples");
 	// Start Comm session
 	comm_status_code code;
 	uint8_t tries = 0;
@@ -130,6 +130,7 @@ void reporting_task(void){
 		}
 		// else: We did it!
 		db("report sent");
+		break;
 	}
 	if (tries == START_COMM_MAX_RETRIES) { // Failed to send report.
 		db("reached max retries on sending report, aborting");

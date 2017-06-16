@@ -20,6 +20,8 @@ void sampling_setup(void) {
 
 }
 
+
+uint16_t total_samples = 0;
 inline void get_data_from_box(uint8_t *buffer) {
 	db("Getting data from box");
 
@@ -31,7 +33,18 @@ inline void get_data_from_box(uint8_t *buffer) {
 
 	db("Generating dummy data");
 	for (uint8_t i = 0; i < SAMPLE_SIZE; i++) {
-		buffer[i] = i + 'a';
+		buffer[i] = '0';
+	}
+	uint8_t i;
+	uint16_t val = total_samples;
+	// Common exception
+	if (val == 0) {
+		return;
+	}
+	i = SAMPLE_SIZE;
+	while (val) {
+		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
+		val /= 10;
 	}
 }
 
