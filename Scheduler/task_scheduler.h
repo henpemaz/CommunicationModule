@@ -24,7 +24,6 @@ void sched_setup(void);
 
 /*
 	Adds the function to the task list, with a initial delay of <delay> seconds and to be run every <looptime> seconds from thereon
-	For a correct operation, <looptime> should be >= 1, otherwise the task will run undefinitelly untill <delay> underflows.
 */
 uint8_t sched_add_task(void(*task)(void), int32_t delay, int32_t looptime);
 
