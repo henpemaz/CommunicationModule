@@ -180,13 +180,15 @@ void sched_mainloop(void) {
 				interrupts(); // End of atomic
 			}
 		}
-#ifdef _DEBUG
-		// Keep USB serial working...
-		set_sleep_mode(SLEEP_MODE_IDLE);
-#else
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-#endif
+//#ifdef _DEBUG
+//		// Keep USB serial working...
+//		set_sleep_mode(SLEEP_MODE_IDLE);
+//#else
+//		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+//#endif
 		
+		set_sleep_mode(SLEEP_MODE_IDLE);
+
 		power_all_disable(); // Disable peripherals
 
 		sleep_enable();

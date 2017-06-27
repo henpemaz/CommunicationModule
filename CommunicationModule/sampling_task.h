@@ -3,7 +3,7 @@
 
 #include "arduino.h"
 
-#define SAMPLING_LOOPTIME  5
+#define SAMPLING_LOOPTIME  60
 
 void sampling_setup(void);
 

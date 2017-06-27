@@ -37,6 +37,7 @@ inline void get_data_from_box(uint8_t *buffer) {
 	}
 	uint8_t i;
 	uint16_t val = total_samples;
+	total_samples++;
 	// Common exception
 	if (val == 0) {
 		return;
