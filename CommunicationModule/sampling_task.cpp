@@ -67,7 +67,8 @@ void sampling_setup(void) {
 
 }
 
-//static uint16_t total_samples = 0;
+static uint16_t total_samples = 0;
+
 //inline void get_dummy_data(uint8_t *buffer) {
 //	db("Generating dummy data");
 //	for (uint8_t i = 0; i < SAMPLE_SIZE; i++) {
@@ -87,6 +88,50 @@ void sampling_setup(void) {
 //	}
 //}
 
+inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
+{
+	for (int i = 0; i < 18; i++)
+		buffer[i] = '0';
+	buffer[0] = '#';
+	int val = total_samples;
+	total_samples++;
+	// fill in 1..5 with sample number
+	uint8_t i = 6;
+	while (val) {
+		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
+		val /= 10;
+	}
+	buffer[6] = ',';
+	// fill in 7-8 with SoC level
+	val = soc; // from OV box
+	i = 9;
+	while (val) {
+		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
+		val /= 10;
+	}
+	buffer[9] = 'P'; //  % sign
+	buffer[10] = ',';
+	// fill in 11-15 with battery current
+	int curr = bc; // from OV box
+	if (curr < 0) {
+		buffer[11] = '-';
+		curr = abs(curr);
+	}
+	else
+		buffer[11] = '+';
+
+	i = 16;
+	while (curr) {
+		buffer[--i] = 48 + curr % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
+		curr /= 10;
+	}
+	buffer[16] = 'm';
+	buffer[17] = 'A';
+	//for(int k=0; k < 18; k++)
+	//	Serial.print((char) buffer[k]);
+	//Serial.println("");
+}
+
 inline void get_data_from_box(uint8_t *buffer) {
 	db("Getting data from box");
 
@@ -96,18 +141,40 @@ inline void get_data_from_box(uint8_t *buffer) {
 	// Request and read sample from box	
 	// run all sampling commands
 	uint8_t recv[32];
-	for (int i; i < sizeof(msg_commands); i++) {
-		// send the message
-		Serial1.write(msg_commands[i]->bytes, msg_commands[i]->len);
-		// get the answer
-		Serial1.setTimeout(1000);
-		Serial1.readBytes(recv, msg_commands[i]->anslen);
-		// copy the date
-		memcpy(buffer, recv+ msg_commands[i]->datapos, msg_commands[i]->datalen);
-		// move on
-		buffer += msg_commands[i]->datalen;
-	}
+	for (int i = 0; i < 32; i++)
+		recv[i] = 0;
+	//for (int i = 0; i < sizeof(msg_commands); i++) {
+	//	// send the message
+	//	Serial1.write(msg_header, 19);
+	//	Serial1.write(msg_commands[i]->bytes, msg_commands[i]->len);
+	//	// get the answer
+	//	Serial1.setTimeout(1000);
+	//	Serial1.readBytes(recv, msg_commands[i]->anslen);
+	//	// copy the date
+	//	memcpy(buffer, recv+ msg_commands[i]->datapos, msg_commands[i]->datalen);
+	//	// move on
+	//	buffer += msg_commands[i]->datalen;
+	//}
 
+	Serial1.write(msg_header, 19);
+	Serial1.write(msg_commands[0]->bytes, msg_commands[0]->len);
+	Serial1.setTimeout(1000);
+	Serial1.readBytes(recv, msg_commands[0]->anslen);
+
+	uint8_t soc = recv[5];
+	//Serial.print("SOC: ");
+	//Serial.println(recv[5]);
+
+	Serial1.write(msg_header, 19);
+	Serial1.write(msg_commands[9]->bytes, msg_commands[9]->len);
+	Serial1.setTimeout(1000);
+	Serial1.readBytes(recv, msg_commands[9]->anslen);
+
+	int bc = (int)((recv[8] << 8) + recv[7]);
+	//Serial.print("BC: ");
+	//Serial.println(bc);
+
+	format_buffer(buffer, soc, bc);
 
 	//get_dummy_data(buffer);
 }
