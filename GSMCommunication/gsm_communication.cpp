@@ -27,6 +27,8 @@ SoftwareSerial sim_serial = SoftwareSerial(SIM_TX, SIM_RX);
 // NOTE : DO NOT INCLUDE HTTP:// OR IT WILL FAIL SILENTLY
 #define POST_URL "putsreq.com/WZlJISLFfouvdVe3G3pu"
 
+#define OK_REPLY "\r\nOK\r\n"
+
 
 enum comm_status_code power_on(void);
 enum comm_status_code power_off(void);
@@ -38,9 +40,6 @@ inline void flush_input(void);
 void uitoa(uint16_t val, uint8_t *buff);
 
 bool module_is_on;
-
-extern const char ok_reply[] = "\r\nOK\r\n";
-
 
 enum comm_status_code comm_setup(void) {
 	db("Setup");
@@ -86,9 +85,9 @@ enum comm_status_code power_on(void) {
 	while (tries < MAX_AT_TRIES) {
 		// AT baud synchronism
 		flush_input();
-		if (get_reply("AT", ok_reply, 100) == COMM_OK) {  // AT OK
+		if (get_reply("AT", OK_REPLY, 100) == COMM_OK) {  // AT OK
 			delay(200);
-			get_reply("ATE0", ok_reply, 100); // Disable echo
+			get_reply("ATE0", OK_REPLY, 100); // Disable echo
 			module_is_on = true;
 			return COMM_OK;
 		}
@@ -109,6 +108,7 @@ enum comm_status_code power_off(void) {
 }
 
 inline enum comm_status_code get_reply(const char *tosend, const char *expected_reply, uint16_t timeout) {
+
 	return get_reply((const uint8_t *)tosend, (const uint8_t *)expected_reply, timeout);
 }
 
@@ -190,19 +190,19 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 	delay(1000);
 	flush_input(); // Dismiss unrequested messages
 	db("Configuring APN");
-	if (get_reply("AT+SAPBR=3,1,\"Contype\", \"GPRS\"", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"APN\", \"" SIM_APN "\"", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"USER\", \"" SIM_USER "\"", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"PWD\", \"" SIM_PWD "\"", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=1,1", ok_reply, 30000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
+	if (get_reply("AT+SAPBR=3,1,\"Contype\", \"GPRS\"", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+SAPBR=3,1,\"APN\", \"" SIM_APN "\"", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+SAPBR=3,1,\"USER\", \"" SIM_USER "\"", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+SAPBR=3,1,\"PWD\", \"" SIM_PWD "\"", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+SAPBR=1,1", OK_REPLY, 30000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
 		db("Failed to configure APN");
 		return COMM_ERR_RETRY;
 	}
 	flush_input();
 	db("Configuring HTTP module");
-	if (get_reply("AT+HTTPINIT", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+HTTPPARA=\"CID\",1", ok_reply, 200) != COMM_OK
-		|| get_reply("AT+HTTPPARA=\"URL\",\"" POST_URL "\"", ok_reply, 200) != COMM_OK) {
+	if (get_reply("AT+HTTPINIT", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+HTTPPARA=\"CID\",1", OK_REPLY, 200) != COMM_OK
+		|| get_reply("AT+HTTPPARA=\"URL\",\"" POST_URL "\"", OK_REPLY, 200) != COMM_OK) {
 		db("Failed to configure HTTP module");
 		return COMM_ERR_RETRY;
 	}
@@ -232,7 +232,7 @@ enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght) {
 enum comm_status_code comm_send_report(void) {
 	db("Send Report");
 	flush_input();
-	if (get_reply("AT+HTTPACTION=1", ok_reply, 500) != COMM_OK) { // Do POST
+	if (get_reply("AT+HTTPACTION=1", OK_REPLY, 500) != COMM_OK) { // Do POST
 		db("POST action failed");
 		return COMM_ERR_RETRY;
 	}
@@ -252,8 +252,8 @@ enum comm_status_code comm_send_report(void) {
 	http_code[3] = 0;
 	db_module(); db_print("HTTP code : "); db_println(http_code);
 
-	get_reply("AT+HTTPTERM", ok_reply, 500);  // No error handling
-	//get_reply("AT+SAPBR=0,1", ok_reply, 500);  // We don't really have to, happens on shutdown 
+	get_reply("AT+HTTPTERM", OK_REPLY, 500);  // No error handling
+	//get_reply("AT+SAPBR=0,1", OK_REPLY, 500);  // We don't really have to, happens on shutdown 
 
 	power_off();
 
@@ -267,7 +267,7 @@ enum comm_status_code comm_send_report(void) {
 
 enum comm_status_code comm_abort(void) {
 	db("Abort");
-	if (get_reply("AT", ok_reply, 200) != COMM_OK) { // Module stuck
+	if (get_reply("AT", OK_REPLY, 200) != COMM_OK) { // Module stuck
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
 		digitalWrite(SIM_RESET, HIGH);

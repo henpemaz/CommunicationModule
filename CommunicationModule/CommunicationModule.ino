@@ -46,6 +46,7 @@ void dummy_func() {
 void setup()
 {
 	db_start();
+	db_wait();
 
 	db("Starting");
 	db("gsm setup");

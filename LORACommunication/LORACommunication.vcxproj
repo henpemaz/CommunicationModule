@@ -81,9 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CommunicationModule\communication.h" />
-    <ClInclude Include="..\debug.h" />
     <ClInclude Include="communication.h" />
-    <ClInclude Include="debug.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lora_communication.cpp" />

@@ -32,7 +32,7 @@ void setup() {
 
 	delay(1000);
 
-	if (get_reply("AT", ok_reply, 100) == COMM_OK) {
+	if (get_reply("AT", OK_REPLY, 100) == COMM_OK) {
 		db("\ngot repply\n");
 	}
 	else {
@@ -47,7 +47,7 @@ void setup() {
 
 	delay(1000);
 
-	if (get_reply("AT", ok_reply, 100) == COMM_OK) {
+	if (get_reply("AT", OK_REPLY, 100) == COMM_OK) {
 		db("\ngot repply\n");
 	}
 	else {
