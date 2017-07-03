@@ -53,8 +53,7 @@ enum comm_status_code comm_abort(void);
 extern const char OK_REPLY[];
 enum comm_status_code power_on(void);
 enum comm_status_code power_off(void);
-inline enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
-enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_reply, uint16_t timeout);
+enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
 inline void flush_input(void);
 #endif
 

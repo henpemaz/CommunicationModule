@@ -6,7 +6,6 @@
 
 #ifdef __AVR_ATmega32U4__
 
-
 #include <SoftwareSerial.h>
 
 #define DB_MODULE "GSM Comm"
@@ -32,9 +31,55 @@ SoftwareSerial sim_serial = SoftwareSerial(SIM_TX, SIM_RX);
 
 enum comm_status_code power_on(void);
 enum comm_status_code power_off(void);
-inline enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
-enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_reply, uint16_t timeout);
+enum comm_status_code __get_reply(const char *tosend, const char *expected_reply, uint16_t timeout);
+enum comm_status_code get_reply(const char *tosend, const char *expected_reply, uint16_t timeout);
 inline void flush_input(void);
+
+// receives FLASH addresses/strings
+enum comm_status_code get_reply_P(const char *tosend, const char *expected_reply, uint16_t timeout) {
+	char tosendbuff[tosend ? (strlen_P(tosend) + 1) : 0];
+	char replybuff[expected_reply ? (strlen_P(expected_reply) + 1) : 0];
+
+	get_reply(tosend ? strcpy_P(tosendbuff, tosend) : NULL, expected_reply ? strcpy_P(replybuff, expected_reply) : NULL, timeout);
+}
+
+// receives normal/sram pointers/strings
+enum comm_status_code get_reply(const char *tosend, const char *expected_reply, uint16_t timeout) {
+	uint8_t reply_index;
+	uint8_t reply;
+	reply_index = 0;
+
+	if (tosend) {
+		db_module();
+		db_print(">>>");
+		db_println((const char*)tosend);
+		sim_serial.println((const char*)tosend);
+	}
+	db_print("<<<");
+	while (timeout > 0) {
+
+		while (sim_serial.available()) {
+			reply = sim_serial.read();
+			db_print((char)reply);
+			if (reply != expected_reply[reply_index]) { // No match, break sequence
+				reply_index = 0;
+				if (reply != expected_reply[reply_index]) { // No match on new sequence
+					continue;
+				}
+			}
+			reply_index++;  // Match
+			if (expected_reply[reply_index] == 0x00) {  // End sequence
+				db_println(""); // end line
+				return COMM_OK;
+			}
+		}
+		delay(1);
+		timeout--;
+	}
+	db_println(""); // end line
+	return COMM_ERR_RETRY;
+}
+
 
 #define UITOA_BUFFER_SIZE 6
 void uitoa(uint16_t val, uint8_t *buff);
@@ -85,9 +130,9 @@ enum comm_status_code power_on(void) {
 	while (tries < MAX_AT_TRIES) {
 		// AT baud synchronism
 		flush_input();
-		if (get_reply("AT", OK_REPLY, 100) == COMM_OK) {  // AT OK
+		if (get_reply_P(PSTR("AT"), PSTR(OK_REPLY), 100) == COMM_OK) {  // AT OK
 			delay(200);
-			get_reply("ATE0", OK_REPLY, 100); // Disable echo
+			get_reply(PSTR("ATE0"), PSTR(OK_REPLY), 100); // Disable echo
 			module_is_on = true;
 			return COMM_OK;
 		}
@@ -98,54 +143,13 @@ enum comm_status_code power_on(void) {
 
 enum comm_status_code power_off(void) {
 	db("Power off");
-	enum comm_status_code code = get_reply("AT+CPOWD=1", "NORMAL POWER DOWN", 2000);
+	enum comm_status_code code = get_reply_P(PSTR("AT+CPOWD=1"), PSTR("NORMAL POWER DOWN"), 2000);
 	if (code == COMM_OK) {
 		delay(1200);
 		flush_input();
 		module_is_on = false;
 	}
 	return code;
-}
-
-inline enum comm_status_code get_reply(const char *tosend, const char *expected_reply, uint16_t timeout) {
-
-	return get_reply((const uint8_t *)tosend, (const uint8_t *)expected_reply, timeout);
-}
-
-enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_reply, uint16_t timeout) {
-	uint8_t reply_index;
-	uint8_t reply;
-	reply_index = 0;
-
-	if (tosend) {
-		db_module();
-		db_print(">>>");
-		db_println((const char*)tosend);
-		sim_serial.println((const char*)tosend);
-	}
-	db_print("<<<");
-	while (timeout > 0) {
-
-		while (sim_serial.available()) {
-			reply = sim_serial.read();
-			db_print((char)reply);
-			if (reply != expected_reply[reply_index]) { // No match, break sequence
-				reply_index = 0;
-				if (reply != expected_reply[reply_index]) { // No match on new sequence
-					continue;
-				}
-			}
-			reply_index++;  // Match
-			if (expected_reply[reply_index] == 0x00) {  // End sequence
-				db_println(""); // end line
-				return COMM_OK;
-			}
-		}
-		delay(1);
-		timeout--;
-	}
-	db_println(""); // end line
-	return COMM_ERR_RETRY;
 }
 
 enum comm_status_code comm_start_report(uint16_t totallen) {
@@ -170,7 +174,7 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 	while (timeout > 0) {
 		// Querry GPRS availability
 		flush_input();
-		if (get_reply("AT+CGATT?", "+CGATT: 1", 200) == COMM_OK) {
+		if (get_reply_P(PSTR("AT+CGATT?"), PSTR("+CGATT: 1"), 200) == COMM_OK) {
 			break;
 		}
 		delay(800);
@@ -190,29 +194,29 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 	delay(1000);
 	flush_input(); // Dismiss unrequested messages
 	db("Configuring APN");
-	if (get_reply("AT+SAPBR=3,1,\"Contype\", \"GPRS\"", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"APN\", \"" SIM_APN "\"", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"USER\", \"" SIM_USER "\"", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=3,1,\"PWD\", \"" SIM_PWD "\"", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+SAPBR=1,1", OK_REPLY, 30000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
+	if (get_reply_P(PSTR("AT+SAPBR=3,1,\"Contype\", \"GPRS\""), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply_P(PSTR("AT+SAPBR=3,1,\"APN\", \"" SIM_APN "\""), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply_P(PSTR("AT+SAPBR=3,1,\"USER\", \"" SIM_USER "\""), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply_P(PSTR("AT+SAPBR=3,1,\"PWD\", \"" SIM_PWD "\""), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply_P(PSTR("AT+SAPBR=1,1"), PSTR(OK_REPLY), 30000) != COMM_OK) {  // 1.85s max connection bringup time on the specifications, but sometimes...
 		db("Failed to configure APN");
 		return COMM_ERR_RETRY;
 	}
 	flush_input();
 	db("Configuring HTTP module");
-	if (get_reply("AT+HTTPINIT", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+HTTPPARA=\"CID\",1", OK_REPLY, 200) != COMM_OK
-		|| get_reply("AT+HTTPPARA=\"URL\",\"" POST_URL "\"", OK_REPLY, 200) != COMM_OK) {
+	if (get_reply_P(PSTR("AT+HTTPINIT"), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply(PSTR("AT+HTTPPARA=\"CID\",1"), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply(PSTR("AT+HTTPPARA=\"URL\",\"" POST_URL "\""), PSTR(OK_REPLY), 200) != COMM_OK) {
 		db("Failed to configure HTTP module");
 		return COMM_ERR_RETRY;
 	}
 	flush_input();
 	db("Starting HTTPDATA session");
-	sim_serial.print("AT+HTTPDATA=");  // Start data session
+	sim_serial.print(F("AT+HTTPDATA="));  // Start data session
 	uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
 	uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
 	sim_serial.print((char*)lenght_buffer);  // <totallen> bytes to send
-	if (get_reply(",60000", "\r\nDOWNLOAD\r\n", 1000) != COMM_OK) {  // POST data transmission, timeout 60 secs
+	if (get_reply_P(PSTR(",60000"), PSTR("\r\nDOWNLOAD\r\n"), 1000) != COMM_OK) {  // POST data transmission, timeout 60 secs
 		db("Failed to start DATA session");
 		return COMM_ERR_RETRY;
 	}
@@ -224,7 +228,7 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght) {
 	db("Fill report");
 	sim_serial.write(buffer, lenght);  // Write binary data to serial
-	db_module(); db_print(lenght); db_println(" bytes of data sent");
+	db_module(); db_print(lenght); db_println(F(" bytes of data sent"));
 	return COMM_OK;
 }
 
@@ -232,11 +236,11 @@ enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght) {
 enum comm_status_code comm_send_report(void) {
 	db("Send Report");
 	flush_input();
-	if (get_reply("AT+HTTPACTION=1", OK_REPLY, 500) != COMM_OK) { // Do POST
+	if (get_reply_P(PSTR("AT+HTTPACTION=1"), PSTR(OK_REPLY), 500) != COMM_OK) { // Do POST
 		db("POST action failed");
 		return COMM_ERR_RETRY;
 	}
-	if (get_reply(NULL, "+HTTPACTION: 1,", 60000) != COMM_OK) { // Send nothing, wait for the +httaction response
+	if (get_reply_P(NULL, PSTR("+HTTPACTION: 1,"), 60000) != COMM_OK) { // Send nothing, wait for the +httaction response
 		db("Module did not respond");                            // somehow no http timeout ???
 		return COMM_ERR_RETRY;
 	}
@@ -250,9 +254,9 @@ enum comm_status_code comm_send_report(void) {
 	http_code[2] = sim_serial.read();
 
 	http_code[3] = 0;
-	db_module(); db_print("HTTP code : "); db_println(http_code);
+	db_module(); db_print(F("HTTP code : ")); db_println(http_code);
 
-	get_reply("AT+HTTPTERM", OK_REPLY, 500);  // No error handling
+	get_reply_P(PSTR("AT+HTTPTERM"), PSTR(OK_REPLY), 500);  // No error handling
 	//get_reply("AT+SAPBR=0,1", OK_REPLY, 500);  // We don't really have to, happens on shutdown 
 
 	power_off();
@@ -267,7 +271,7 @@ enum comm_status_code comm_send_report(void) {
 
 enum comm_status_code comm_abort(void) {
 	db("Abort");
-	if (get_reply("AT", OK_REPLY, 200) != COMM_OK) { // Module stuck
+	if (get_reply_P(PSTR("AT"), PSTR(OK_REPLY), 200) != COMM_OK) { // Module stuck
 		digitalWrite(SIM_RESET, LOW);// Hardware reset
 		delay(200);
 		digitalWrite(SIM_RESET, HIGH);

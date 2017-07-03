@@ -50,11 +50,10 @@ enum comm_status_code comm_abort(void);
 
 #ifdef __GSM_TEST__
 // Expose internal functions for test suite
-extern const char OK_REPLY[];
+#define OK_REPLY "\r\nOK\r\n"
 enum comm_status_code power_on(void);
 enum comm_status_code power_off(void);
-inline enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
-enum comm_status_code get_reply(const uint8_t *tosend, const uint8_t *expected_reply, uint16_t timeout);
+enum comm_status_code get_reply(const char * tosend, const char * expected_reply, uint16_t timeout);
 inline void flush_input(void);
 #endif
 
