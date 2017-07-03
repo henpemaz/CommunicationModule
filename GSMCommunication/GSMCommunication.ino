@@ -60,7 +60,7 @@ void setup() {
 	db(code);
 	db("\n");
 
-	while (1);
+	//while (1);
 
 	db("\npower off\n");
 	code = power_off();
