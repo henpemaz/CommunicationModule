@@ -205,8 +205,8 @@ enum comm_status_code comm_start_report(uint16_t totallen) {
 	flush_input();
 	db("Configuring HTTP module");
 	if (get_reply_P(PSTR("AT+HTTPINIT"), PSTR(OK_REPLY), 200) != COMM_OK
-		|| get_reply(PSTR("AT+HTTPPARA=\"CID\",1"), PSTR(OK_REPLY), 200) != COMM_OK
-		|| get_reply(PSTR("AT+HTTPPARA=\"URL\",\"" POST_URL "\""), PSTR(OK_REPLY), 200) != COMM_OK) {
+		|| get_reply_P(PSTR("AT+HTTPPARA=\"CID\",1"), PSTR(OK_REPLY), 200) != COMM_OK
+		|| get_reply_P(PSTR("AT+HTTPPARA=\"URL\",\"" POST_URL "\""), PSTR(OK_REPLY), 200) != COMM_OK) {
 		db("Failed to configure HTTP module");
 		return COMM_ERR_RETRY;
 	}
