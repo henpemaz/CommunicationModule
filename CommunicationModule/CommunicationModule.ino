@@ -49,8 +49,8 @@ void setup()
 	db_wait();
 
 	db("Starting");
-	db("gsm setup");
-	comm_setup();
+	//db("gsm setup");
+	//comm_setup();
 
 	db("storage setup");
 	stor_setup();
@@ -58,8 +58,19 @@ void setup()
 	db("sampling setup");
 	sampling_setup();
 
-	db("reporting setup");
-	reporting_setup();
+	//db("reporting setup");
+	//reporting_setup();
+
+	// // // // TEST ZONE
+
+	sampling_task();
+	delay(1000);
+	
+
+	while (1);
+	// // // //  // // // 
+
+
 
 	// Launch tasks
 	db("scheduler setup");

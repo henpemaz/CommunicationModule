@@ -8,6 +8,7 @@
 #include "sampling_task.h"
 #include "storage_manager.h"
 
+#include "util/crc16.h"
 
 #define SAMPLE_SIZE 18
 
@@ -49,7 +50,7 @@ const struct command cmd_BT = { { 0x08, 0x00, 0x08, 0x02, 0x48 }, 5, 10, 7, 2 };
 
 
 
-const struct command *msg_commands[] = {
+const struct command * const msg_commands[] = {
 	&cmd_RSOC,
 	&cmd_RC,
 	&cmd_FCC,
@@ -69,24 +70,24 @@ void sampling_setup(void) {
 
 static uint16_t total_samples = 0;
 
-//inline void get_dummy_data(uint8_t *buffer) {
-//	db("Generating dummy data");
-//	for (uint8_t i = 0; i < SAMPLE_SIZE; i++) {
-//		buffer[i] = '0';
-//	}
-//	uint8_t i;
-//	uint16_t val = total_samples;
-//	total_samples++;
-//	// Common exception
-//	if (val == 0) {
-//		return;
-//	}
-//	i = SAMPLE_SIZE;
-//	while (val) {
-//		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so it still points to the digit when done)
-//		val /= 10;
-//	}
-//}
+inline void get_dummy_data(uint8_t *buffer) {
+	db("Generating dummy data");
+	for (uint8_t i = 0; i < SAMPLE_SIZE; i++) {
+		buffer[i] = '0';
+	}
+	uint8_t i;
+	uint16_t val = total_samples;
+	total_samples++;
+	// Common exception
+	if (val == 0) {
+		return;
+	}
+	i = SAMPLE_SIZE;
+	while (val) {
+		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so it still points to the digit when done)
+		val /= 10;
+	}
+}
 
 inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
 {
@@ -132,29 +133,62 @@ inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
 	//Serial.println("");
 }
 
-inline void get_data_from_box(uint8_t *buffer) {
-	db("Getting data from box");
+#define MAX_TRIES 5
 
-	// (Re)Configure serial interface to the box
-	Serial1.begin(38400);
-
-	// Request and read sample from box	
-	// run all sampling commands
+inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 	uint8_t recv[32];
-	for (int i = 0; i < 32; i++)
-		recv[i] = 0;
-	//for (int i = 0; i < sizeof(msg_commands); i++) {
-	//	// send the message
-	//	Serial1.write(msg_header, 19);
-	//	Serial1.write(msg_commands[i]->bytes, msg_commands[i]->len);
-	//	// get the answer
-	//	Serial1.setTimeout(1000);
-	//	Serial1.readBytes(recv, msg_commands[i]->anslen);
-	//	// copy the date
-	//	memcpy(buffer, recv+ msg_commands[i]->datapos, msg_commands[i]->datalen);
-	//	// move on
-	//	buffer += msg_commands[i]->datalen;
-	//}
+	// send the command
+	db("sending command");
+	Serial1.write(msg_header, 19);
+	Serial1.write(comm->bytes, comm->len);
+
+	// get the answer
+	Serial1.setTimeout(1000);
+	uint8_t nbytes = Serial1.readBytes(recv, comm->anslen);
+
+	// Check answer
+	if (nbytes != comm->anslen) { // Command timeout
+		db("command timeout");
+		return -1;
+	}
+
+	// Check sum
+	uint8_t sum = 0;
+	for (int j = 0; j < comm->anslen - 1; j++) sum = _crc_ibutton_update(sum, recv[j]); // Maxim/Dallas CRC8
+	if (sum != recv[comm->anslen - 1]) { // Bad checksum
+		db("bad checksum");
+		return -1;
+	}
+
+	// we did it, copy the data
+	db("data acquired");
+	memcpy(databuff, recv + comm->datapos, comm->datalen);
+	return 0;
+}
+
+inline uint8_t get_data_from_box(uint8_t *buffer) {
+	db("getting data from box");
+	// run all sampling commands
+	for (int i = 0; i < 10; i++) {
+		uint8_t tries = 0;
+		
+		while (send_command(msg_commands[i], buffer) && tries < MAX_TRIES) {
+			tries++;
+		}
+
+		if (tries == MAX_TRIES) { // We didn't make it
+			db("excessive retries");
+			return -1;
+		}
+		buffer += msg_commands[i]->datalen;
+	}
+	db("sampling successful");
+	return 0;
+}
+
+
+inline uint8_t get_special_data_from_box(uint8_t *buffer) {
+	uint8_t recv[32];
 
 	Serial1.write(msg_header, 19);
 	Serial1.write(msg_commands[0]->bytes, msg_commands[0]->len);
@@ -162,8 +196,6 @@ inline void get_data_from_box(uint8_t *buffer) {
 	Serial1.readBytes(recv, msg_commands[0]->anslen);
 
 	uint8_t soc = recv[5];
-	//Serial.print("SOC: ");
-	//Serial.println(recv[5]);
 
 	Serial1.write(msg_header, 19);
 	Serial1.write(msg_commands[9]->bytes, msg_commands[9]->len);
@@ -171,26 +203,34 @@ inline void get_data_from_box(uint8_t *buffer) {
 	Serial1.readBytes(recv, msg_commands[9]->anslen);
 
 	int bc = (int)((recv[8] << 8) + recv[7]);
-	//Serial.print("BC: ");
-	//Serial.println(bc);
 
 	format_buffer(buffer, soc, bc);
 
-	//get_dummy_data(buffer);
+	return 0;
 }
 
 void sampling_task(void) {
-	db("Running Sampling task");
+	db("running Sampling task");
 
 	// Start the EEPROM SPI
 	stor_start();
+
+	// (Re)Configure serial interface to the box
+	Serial1.begin(38400);
 	
 	// Get sample data
 	uint8_t buff[SAMPLE_SIZE];
-	get_data_from_box(buff);
+	//get_dummy_data(buff);
+	uint8_t code = get_data_from_box(buff);
+	//get_special_data_from_box(buff);
+
+	if (code != 0) { // Something wrong
+		db("sampling aborted");
+		return;
+	}
 
 	// Store this sample to the external eeprom
-	db("Writting sample to database");
+	db("writting sample to database");
 	stor_write_sample(buff);
 
 	stor_end();
@@ -199,33 +239,6 @@ void sampling_task(void) {
 	db("end");
 	delay(100);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
