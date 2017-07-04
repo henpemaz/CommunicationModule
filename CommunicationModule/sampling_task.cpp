@@ -12,7 +12,7 @@
 
 #define SAMPLE_SIZE 18
 
-// Fills 0 until the 16th, then preamble
+// Fills 0 until the 16th, then preamble address
 const byte msg_header[] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0xc5,0x6a,0x29};
 
 
@@ -99,7 +99,7 @@ inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
 	// fill in 1..5 with sample number
 	uint8_t i = 6;
 	while (val) {
-		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so it still points to the digit when done)
+		buffer[--i] = 48 + val % 10;
 		val /= 10;
 	}
 	buffer[6] = ',';
@@ -107,7 +107,7 @@ inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
 	val = soc; // from OV box
 	i = 9;
 	while (val) {
-		buffer[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so it still points to the digit when done)
+		buffer[--i] = 48 + val % 10;
 		val /= 10;
 	}
 	buffer[9] = 'P'; //  % sign
@@ -123,7 +123,7 @@ inline void format_buffer(uint8_t *buffer, uint8_t soc, int bc)
 
 	i = 16;
 	while (curr) {
-		buffer[--i] = 48 + curr % 10;  // Fill in each digit (--i happens first, so it still points to the digit when done)
+		buffer[--i] = 48 + curr % 10;
 		curr /= 10;
 	}
 	buffer[16] = 'm';
