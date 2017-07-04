@@ -40,7 +40,7 @@ enum comm_status_code get_reply_P(const char *tosend, const char *expected_reply
 	char tosendbuff[tosend ? (strlen_P(tosend) + 1) : 0];
 	char replybuff[expected_reply ? (strlen_P(expected_reply) + 1) : 0];
 
-	get_reply(tosend ? strcpy_P(tosendbuff, tosend) : NULL, expected_reply ? strcpy_P(replybuff, expected_reply) : NULL, timeout);
+	return get_reply(tosend ? strcpy_P(tosendbuff, tosend) : NULL, expected_reply ? strcpy_P(replybuff, expected_reply) : NULL, timeout);
 }
 
 // receives normal/sram pointers/strings
