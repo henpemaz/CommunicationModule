@@ -132,7 +132,7 @@ enum comm_status_code power_on(void) {
 		flush_input();
 		if (get_reply_P(PSTR("AT"), PSTR(OK_REPLY), 100) == COMM_OK) {  // AT OK
 			delay(200);
-			get_reply(PSTR("ATE0"), PSTR(OK_REPLY), 100); // Disable echo
+			get_reply_P(PSTR("ATE0"), PSTR(OK_REPLY), 100); // Disable echo
 			module_is_on = true;
 			return COMM_OK;
 		}
