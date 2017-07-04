@@ -6,18 +6,16 @@
 #include "debug.h"
 
 
-// NOTE : Define either GSM or LORA on the project settings !
-
 #ifdef GSM
 #ifndef __AVR_ATmega32U4__
 #error Wrong board !
 #endif
-#endif
-
-#ifdef LORA
+#elif LORA
 #ifndef __SAMD21G18A__
 #error Wrong board !
 #endif
+#else
+#error Define either GSM or LORA on the project settings !
 #endif
 
 #include "communication.h"
@@ -27,21 +25,6 @@
 
 #include "sampling_task.h"
 #include "reporting_task.h"
-
-
-///////////// DEBUG
-void dummy_func() {
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(1000);
-	digitalWrite(LED_BUILTIN, LOW);
-	delay(1000);
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(1000);
-	digitalWrite(LED_BUILTIN, LOW);
-	delay(1000);
-}
-///////////// \DEBUG
 
 void setup()
 {

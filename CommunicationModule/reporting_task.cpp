@@ -90,7 +90,6 @@ void reporting_task(void){
 		return;
 	}
 	db("module connected");
-	connection_retries = 0; // Actually connected, for real
 
 	// Fill in the samples
 	uint8_t buffer[FETCH_BUFFER_MAX_SIZE];
@@ -114,15 +113,19 @@ void reporting_task(void){
 	tries = 0;
 	while (tries < START_COMM_MAX_RETRIES) {
 		code = comm_send_report();
-		// If connection error:
+		// If connection error: Reschedule
 		if (code == COMM_ERR_RETRY_LATER) {
-			db("connection error, retrying in 10s");
-			//	Try once more in 10s
-			delay(10000);
-			tries++;
-			continue;
+			db("connection error");
+			if (connection_retries < RETRY_CONNECTION_MAX_TRIES) {
+				db("rescheduling");
+				sched_add_task(reporting_task, RETRY_CONNECTION_TIME, 0);
+				connection_retries++;
+			}// Else: nothing special, the task will be run again soon anyways...
+			stor_end();
+			//comm_abort(); RETRY_LATER shuts down the module already
+			return;
 		}
-		// If other errors: Retry once more
+		// If other errors: Retry
 		if (code == COMM_ERR_RETRY) {
 			db("module error, retrying");
 			tries++;
@@ -137,8 +140,6 @@ void reporting_task(void){
 		comm_abort();
 		stor_confirm_read(false);
 		stor_end();
-		// We *could* re-schedule it...
-		// nah
 		return;
 	}
 	// success: Commit read head
@@ -146,6 +147,8 @@ void reporting_task(void){
 	db("confirming read data");
 	stor_confirm_read(true);
 	stor_end();
+	connection_retries = 0; // We did it, it's over...
+
 
 	if (samples_remaining) {
 		db("there are samples remaining, scheduling extra job");

@@ -220,9 +220,9 @@ void sampling_task(void) {
 	
 	// Get sample data
 	uint8_t buff[SAMPLE_SIZE];
-	//get_dummy_data(buff);
-	uint8_t code = get_data_from_box(buff);
-	//get_special_data_from_box(buff);
+	//uint8_t code = get_dummy_data(buff);
+	//uint8_t code = get_data_from_box(buff);
+	uint8_t code = get_special_data_from_box(buff);
 
 	if (code != 0) { // Something wrong
 		db("sampling aborted");
