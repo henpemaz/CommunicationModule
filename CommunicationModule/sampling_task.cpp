@@ -163,15 +163,15 @@ inline uint8_t get_data_from_box(uint8_t *buffer) {
 
 
 inline uint8_t get_special_data_from_box(uint8_t *buffer) {
-	uint8_t recv[32];
+	uint8_t recv[2];
 
 	// RSOC
 	while(send_command(msg_commands[0], recv)) ; // Retry on failure
-	uint8_t soc = recv[5];
+	uint8_t soc = recv[0];
 
 	// BC
 	while (send_command(msg_commands[9], recv)); // Retry on failure
-	int bc = (int)((recv[8] << 8) + recv[7]);
+	int bc = (int)((recv[1] << 8) + recv[0]);
 
 	db_module(); db_print(F("got soc: ")); db_print(soc); db_print(F(", bc: ")); db_println(bc);
 
