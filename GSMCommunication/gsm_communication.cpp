@@ -24,7 +24,8 @@ SoftwareSerial sim_serial = SoftwareSerial(SIM_TX, SIM_RX);
 #define SIM_PWD "pass"
 
 // NOTE : DO NOT INCLUDE HTTP:// OR IT WILL FAIL SILENTLY
-#define POST_URL "putsreq.com/WZlJISLFfouvdVe3G3pu"
+//#define POST_URL "putsreq.com/WZlJISLFfouvdVe3G3pu"
+#define POST_URL "posttestserver.com/post.php?dir=hen"
 
 #define OK_REPLY "\r\nOK\r\n"
 
