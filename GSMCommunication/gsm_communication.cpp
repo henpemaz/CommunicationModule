@@ -4,7 +4,7 @@
 
 #include "communication.h"
 
-#ifdef __AVR_ATmega32U4__
+#ifdef GSM
 
 #include <SoftwareSerial.h>
 
@@ -245,7 +245,7 @@ enum comm_status_code comm_send_report(void) {
 		db("Module did not respond");                            // somehow no http timeout ???
 		return COMM_ERR_RETRY;
 	}
-	db("Got answer from server");
+	db("Got answer from request");
 	char http_code[4];
 	while (!sim_serial.available())delay(1);
 	http_code[0] = sim_serial.read();
@@ -262,7 +262,7 @@ enum comm_status_code comm_send_report(void) {
 
 	power_off();
 
-	if (http_code[0] == '2' && http_code[2] == '0') { // OK
+	if (http_code[0] == '2' && http_code[2] == '0') { // 200 OK
 		return COMM_OK;
 	}
 
@@ -307,11 +307,4 @@ void uitoa(uint16_t val, uint8_t *buff) {
 
 
 
-
-
-
-
-
-
-
-#endif // AVR
+#endif // GSM

@@ -5,7 +5,7 @@
 
 #include "arduino.h"
 
-#define REPORTING_LOOPTIME  600
+#define REPORTING_LOOPTIME  7200
 
 #define MAX_SAMPLES_PER_REPORT 65536u
 
