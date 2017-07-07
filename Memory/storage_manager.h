@@ -11,9 +11,9 @@
 * Concatenation de blocks de 18 bytes avec chaque block un échantillon de données.
 *
 * --- Fonctions accessibles aux autres parties du système ---
-* 1) void stor_write_sample(byte *sample)
+* 1) void stor_write(byte *sample)
 *
-* 2) int stor_read_sample(byte *buffer, int maxlen)
+* 2) int stor_read(byte *buffer, int maxlen)
 *
 * 3) void stor_confirm_read(bool do_commit)
 *
@@ -35,37 +35,28 @@
 */
 void stor_setup(void);
 
-void stor_start(void);
+uint8_t stor_start(void);
+
+void stor_abort(void);
 
 void stor_end(void);
 
 /*
-	Ce fonction va stocker un échantillon de données dans la mémoire à partir de la
+	Ce fonction va stocker les données avec longueur 'len' dans la mémoire à partir de la
 	première addresse qui est libre.
 */
-void stor_write_sample(uint8_t * data);
+uint8_t stor_write(uint8_t * data, uint16_t len);
 
 /*
-	Ce fonction va lire et retourner les données avec longueur 'len' qui sont stockés
+	Ce fonction va lire et retourner les données qui sont stockés
 	dans la mémoire à partir de l'adresse 'addresse_lu'.
 */
-uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen);
+uint16_t stor_read(uint8_t *buffer, uint16_t maxlen);
 
 /*
-	Avancer la tête de lecture à la dernière position lue, ou recoule la position de lecture à la tête de lecture
-*/
-void stor_confirm_read(bool do_commit);
-
-/*
-	Query available lenght of data store
+Query available lenght of data store
 */
 uint16_t stor_available(void);
-
-void stor_erase_eeprom();
-
-
-
-
 
 #endif
 

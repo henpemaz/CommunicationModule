@@ -228,12 +228,18 @@ inline uint8_t get_special_data_from_box(uint8_t *buffer) {
 
 */
 
+#define STOR_FUN_MAX_RETRIES 3
 void sampling_task(void) {
 	db("running Sampling task");
 
 	// Start the EEPROM SPI
-	stor_start();
-
+	uint8_t tries = 0;
+	while (stor_start() && tries < STOR_FUN_MAX_RETRIES) tries++;
+	if (tries == STOR_FUN_MAX_RETRIES) {
+		db("Failed to start memory");
+		stor_abort();
+		return;
+	}
 	// (Re)Configure serial interface to the box
 	Serial1.begin(38400);
 	
@@ -245,14 +251,14 @@ void sampling_task(void) {
 
 	if (code != 0) { // Something wrong
 		db("sampling aborted");
-		stor_end();
+		stor_abort();
 		Serial1.end();
 		return;
 	}
 
 	// Store this sample to the external eeprom
 	db("writting sample to database");
-	stor_write_sample(buff);
+	stor_write(buff, SAMPLE_SIZE);
 
 	stor_end();
 	Serial1.end();

@@ -18,9 +18,6 @@
     <None Include="Memory.ino" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.Memory.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="storage_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>

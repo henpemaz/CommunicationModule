@@ -33,7 +33,7 @@ void loop() {
 		buf[I] = 0;
 	}
 
-	int len = stor_read_sample(buf, maxlen);
+	int len = stor_read(buf, maxlen);
 	print_samples(buf, len);
 
 	byte sample[18];
@@ -43,14 +43,10 @@ void loop() {
 	}
 	for (int I = 0; I<15; I++)
 	{
-		stor_write_sample(sample);
+		stor_write(sample, 18);
 	}
 
-	len = stor_read_sample(buf, maxlen);
-	print_samples(buf, len);
-
-	stor_erase_eeprom();
-	len = stor_read_sample(buf, maxlen);
+	len = stor_read(buf, maxlen);
 	print_samples(buf, len);
 
 	// end of execution

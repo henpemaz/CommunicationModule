@@ -21,7 +21,6 @@
 
 // constants
 #define WIP_MASK      0x01
-#define SAMPLE_SIZE   18      // 18B of data stored each sample
 #define PAGE_SIZE     128
 #define MEMORY_SIZE   65536   // 64 kB
 
@@ -31,10 +30,11 @@ uint16_t adr_lir = 0;
 uint16_t adr_lir_committed = 0;
 
 // Prototypes
-bool memory_is_busy();
-void write_eeprom(uint8_t *data, uint16_t address, uint16_t len);
-void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len);
-void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len);
+uint8_t wait_memory(uint16_t timeout);
+uint8_t memory_is_busy(void);
+uint8_t write_eeprom(uint8_t *data, uint16_t address, uint16_t len);
+uint8_t write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len);
+uint8_t read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len);
 
 /*
 	Set up memory interface, configure interfaces and pins
@@ -45,14 +45,23 @@ void stor_setup(void) {
 	digitalWrite(SLAVESELECT, HIGH); //disable device
 }
 
-void stor_start(void) {
+uint8_t stor_start(void) {
 	db("Start");
 	SPI.begin();
+	return wait_memory(1000);
+}
+
+void stor_abort(void) {
+	db("Abort");
+	adr_lir = adr_lir_committed;
+	wait_memory(1000);
+	SPI.end();
 }
 
 void stor_end(void) {
 	db("End");
-	while (memory_is_busy());
+	adr_lir_committed = adr_lir;
+	wait_memory(1000);
 	SPI.end();
 }
 
@@ -60,39 +69,33 @@ void stor_end(void) {
 * Ce fonction va stocker un échantillon de données dans la mémoire à partir de la
 * première addresse qui est libre.
 */
-void stor_write_sample(uint8_t *data)
+uint8_t stor_write(uint8_t *data, uint16_t len)
 {
 	db("Write sample");
-	write_eeprom(data, adr_ecr, SAMPLE_SIZE);
-	adr_ecr += SAMPLE_SIZE;
+	if (write_eeprom(data, adr_ecr, len)) {
+		db("Write error");
+		return -1;
+	}
+	adr_ecr += len;
+	return 0;
 }
 
 /*
 * Ce fonction va lire et retourner les données avec longueur 'len' qui sont stockés
 * dans la mémoire à partir de l'adresse 'addresse_lu'.
+* Return : len (longueur des donnes lus)
 */
-uint16_t stor_read_sample(uint8_t *buffer, uint16_t maxlen)
+uint16_t stor_read(uint8_t *buffer, uint16_t maxlen)
 {
 	db("Read sample");
 	uint16_t len = min(stor_available(), maxlen);
 
-	read_eeprom(buffer, adr_lir, len);
+	if (read_eeprom(buffer, adr_lir, len)) {
+		db("Read error");
+		return 0;
+	}
 	adr_lir += len;
 	return len;
-}
-
-
-void stor_confirm_read(bool do_commit)
-{
-	db("Confirm read");
-	if (do_commit)
-	{
-		adr_lir_committed = adr_lir;
-	}
-	else
-	{
-		adr_lir = adr_lir_committed;
-	}
 }
 
 
@@ -116,14 +119,15 @@ void stor_erase_eeprom()
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(WREN); //write enable
 	digitalWrite(SLAVESELECT, HIGH);
-	while (memory_is_busy());
+	wait_memory(1000);
+
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(CE); //write instruction
 	digitalWrite(SLAVESELECT, HIGH);
-	while (memory_is_busy());
+	wait_memory(1000);
 }
 
-bool memory_is_busy()
+uint8_t memory_is_busy()
 {
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(RDSR);
@@ -133,26 +137,36 @@ bool memory_is_busy()
 	return ((status_reg & WIP_MASK) == 1);
 }
 
+
+uint8_t wait_memory(uint16_t timeout) {
+	while (timeout && memory_is_busy()) {
+		delay(1);
+		timeout--;
+	}
+	return !timeout; // 0 on ok, 1 on timeout
+}
+
+
 /*
 * This method will write the data in the buffer 'data' with length 'len' into the memory
 * starting from address 'address'. Memory page overflows are handeled in this method.
 */
-void write_eeprom(uint8_t *data, uint16_t address, uint16_t len)
+uint8_t write_eeprom(uint8_t *data, uint16_t address, uint16_t len)
 {
 	while (len > 0)
 	{
 		if ((address % PAGE_SIZE) + len >= PAGE_SIZE)
 		{
 			uint16_t len_part = PAGE_SIZE - (address % PAGE_SIZE);
-			write_eeprom_page(data, address, len_part);
 			len -= len_part;
 			address += len_part;
 			data += len_part;
+			return write_eeprom_page(data, address, len_part);
 		}
 		else
 		{
-			write_eeprom_page(data, address, len);
 			len = 0;
+			return write_eeprom_page(data, address, len);
 		}
 	}
 }
@@ -163,13 +177,16 @@ void write_eeprom(uint8_t *data, uint16_t address, uint16_t len)
 * If input satisfies following condition: (address % PAGE_SIZE) + len <= PAGE_SIGE
 * Then the method will execute correctly.
 */
-void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len)
+uint8_t write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len)
 {
 	//fill eeprom w/ buffer
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(WREN); //write enable
 	digitalWrite(SLAVESELECT, HIGH);
-	while (memory_is_busy());
+	if (wait_memory(1000)) {
+		return -1;
+	}
+
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(WRIT); //write instruction
 	SPI.transfer((uint8_t)(address >> 8));   //send MSByte address first
@@ -181,7 +198,10 @@ void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len)
 	}
 	digitalWrite(SLAVESELECT, HIGH); //release chip
 									 //wait for eeprom to finish writing
-	while (memory_is_busy());
+	if (wait_memory(1000)) {
+		return -1;
+	}
+	return 0;
 }
 
 /*
@@ -189,7 +209,7 @@ void write_eeprom_page(uint8_t *data, uint16_t address, uint16_t len)
 * 'address' and stores them in the given data buffer 'buf'.
 *
 */
-void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len)
+uint8_t read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len)
 {
 	digitalWrite(SLAVESELECT, LOW);
 	SPI.transfer(READ); //transmit read opcode
@@ -200,4 +220,6 @@ void read_eeprom(uint8_t *buffer, uint16_t address, uint16_t len)
 		buffer[i] = SPI.transfer(0xFF); //get data byte
 	}
 	digitalWrite(SLAVESELECT, HIGH);
+
+	return wait_memory(1000);
 }

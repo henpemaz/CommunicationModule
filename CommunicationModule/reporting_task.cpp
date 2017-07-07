@@ -34,16 +34,25 @@ void reschedule(void) {
 
 	For a complete explanation, see flow chart : https://docs.google.com/drawings/d/1VrfocBie4MKbHMRCDibGaBfLuZse3hcOaG2OG4jfAq4/edit
 */
+#define STOR_FUN_MAX_RETRIES 3
 void reporting_task(void){
+	db("Start");
 	// Check
 	// Turn on memory
-	stor_start();
+	uint8_t tries = 0;
+	while (stor_start() && tries < STOR_FUN_MAX_RETRIES) tries++;
+	if (tries == STOR_FUN_MAX_RETRIES) {
+		db("Failed to start memory");
+		stor_abort();
+		return;
+	}
+
 	// Query available data
 	db("querrying data");
 	uint16_t available = stor_available();
 	if (available == 0) { // If not enough samples available, abort
 		db("not enough samples, abort");
-		stor_end();
+		stor_abort();
 		return;
 	}
 	// If too many samples, trim and signal that the task has to be re-run later
@@ -57,7 +66,7 @@ void reporting_task(void){
 
 	// Start Comm session
 	comm_status_code code;
-	uint8_t tries = 0;
+	tries = 0;
 	while (tries < START_COMM_MAX_RETRIES) {
 		db("attempting to start report");
 		code = comm_start_report(available);
@@ -74,7 +83,7 @@ void reporting_task(void){
 			db("connection failed");
 			reschedule();
 			//comm_abort(); RETRY_LATER shuts down the module already
-			stor_end();
+			stor_abort();
 			return;
 		}
 		
@@ -85,7 +94,7 @@ void reporting_task(void){
 		db("reached max retries on start");
 		reschedule();
 		comm_abort();
-		stor_end();
+		stor_abort();
 		return;
 	}
 	// Else :
@@ -100,9 +109,18 @@ void reporting_task(void){
 		if (fetchlen > available) {
 			fetchlen = available;
 		}
-		stor_read_sample(buffer, fetchlen);
-		// These storage functions have such useless returns values...
-		// TODO how to tell if it's a OK_READ ?
+
+		uint16_t readlen;
+		tries = 0;
+		while ((readlen = stor_read(buffer, fetchlen)) && readlen != fetchlen && tries < STOR_FUN_MAX_RETRIES) tries++;
+		if (tries == STOR_FUN_MAX_RETRIES) {
+			db("Failed to read memory");
+			reschedule();
+			comm_abort();
+			stor_abort();
+			return;
+		}
+
 		available -= fetchlen;
 
 	//	Fill in Comm report
@@ -119,8 +137,7 @@ void reporting_task(void){
 			db("connection error");
 			reschedule();
 			//comm_abort(); RETRY_LATER shuts down the module already
-			stor_confirm_read(false);
-			stor_end();
+			stor_abort();
 			return;
 		}
 		// If other errors: Retry
@@ -136,26 +153,24 @@ void reporting_task(void){
 	if (tries == START_COMM_MAX_RETRIES) { // Failed to send report.
 		db("reached max retries on send");
 		comm_abort();
-		stor_confirm_read(false);
-		stor_end();
+		stor_abort();
 		return;
 	}
 	// Else : success
 	
 	// Commit read head
 	db("confirming read data");
-	stor_confirm_read(true);
 	stor_end();
-
 	// Communication closed on successful send_report :)
 
-	// Reporting successful, reset retry counter
-	connection_retries = 0; // We did it, it's over...
-
-
-	if (samples_remaining) {
+	// Samples left to send ? Time slot left to send ?
+	if (samples_remaining && connection_retries < RETRY_CONNECTION_MAX_TRIES-1) {
 		db("scheduling extra job");
 		sched_add_task(reporting_task, RETRY_CONNECTION_TIME, 0);
 	}
+
+	// Reporting successful, reset retry counter
+	connection_retries = 0; // We did it, it's over...
+	
 	return;
 }
