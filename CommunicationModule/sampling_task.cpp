@@ -126,7 +126,6 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 	}
 
 	// we did it, copy the data
-	db("data acquired");
 	memcpy(databuff, recv + comm->datapos, comm->datalen);
 	db_module(); db_print("got : ");
 #ifdef _DEBUG
@@ -134,8 +133,6 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 		Serial.print((byte)databuff[i], HEX);
 	db_println();
 #endif // _DEBUG
-
-
 	return 0;
 }
 
@@ -224,6 +221,12 @@ inline uint8_t get_special_data_from_box(uint8_t *buffer) {
 
 
 
+/* Sampling task
+	Retrieves data from the box and stores it into the memory
+
+	For a complete diagram, see https://docs.google.com/drawings/d/16fO7-UE9T9I5ijiOXyMK4tholkQQAXtwBO2k14w45mg/edit
+
+*/
 
 void sampling_task(void) {
 	db("running Sampling task");
@@ -242,6 +245,8 @@ void sampling_task(void) {
 
 	if (code != 0) { // Something wrong
 		db("sampling aborted");
+		stor_end();
+		Serial1.end();
 		return;
 	}
 
@@ -250,6 +255,7 @@ void sampling_task(void) {
 	stor_write_sample(buff);
 
 	stor_end();
+	Serial1.end();
 
 	// Go back to sleep
 	db("end");
