@@ -25,7 +25,7 @@ struct command {
 	uint8_t datalen; // The lenght of the data
 };
 
-//const struct command cmd_OPID = { { 0x07, 0x01, 0x0e, 0x9a }, 4, ???};
+//const struct command cmd_OPID = { { 0x07, 0x01, 0x0e, 0x9a }, 4, ???}; // Unknown lenght
 //const struct command cmd_PPID = { { 0x07, 0x08, 0x14, 0xcb }, 4, ???};
 const struct command cmd_PS = { { 0x06, 0x09, 0x57 }, 3, 8, 5, 1 }; // PAYG state
 const struct command cmd_OCS = { { 0x06, 0x0a, 0xb5 }, 3, 8, 5, 1 }; // Output state
@@ -39,15 +39,14 @@ const struct command cmd_AC = { { 0x06, 0x10, 0x56 }, 3, 8, 5, 2 }; // Discharge
 const struct command cmd_PD = { { 0x06, 0x07, 0x48 }, 3, 8, 5, 2 }; // Top up days
 const struct command cmd_RDB = { { 0x06, 0x013, 0xb4 }, 3, 8, 5, 2 }; // Running days
 const struct command cmd_HTOP = { { 0x06, 0x11, 0x08 }, 3, 14, 5, 8 }; // HASH TOP
-const struct command cmd_CV1 = { { 0x08, 0x00, 0x3f, 0x02, 0x0b }, 5, 10, 7, 2 };
+const struct command cmd_CV1 = { { 0x08, 0x00, 0x3f, 0x02, 0x0b }, 5, 10, 7, 2 }; // Cell voltage
 const struct command cmd_CV2 = { { 0x08, 0x00, 0x3e, 0x02, 0xcf }, 5, 10, 7, 2 };
 const struct command cmd_CV3 = { { 0x08, 0x00, 0x3d, 0x02, 0x9a }, 5, 10, 7, 2 };
 const struct command cmd_CV4 = { { 0x08, 0x00, 0x3c, 0x02, 0x5e }, 5, 10, 7, 2 };
-const struct command cmd_BV = { { 0x08, 0x00, 0x09, 0x02, 0x8c }, 5, 10, 7, 2 };
-const struct command cmd_BC = { { 0x08, 0x00, 0x0a, 0x02, 0xd9 }, 5, 10, 7, 2 };
-const struct command cmd_BT = { { 0x08, 0x00, 0x08, 0x02, 0x48 }, 5, 10, 7, 2 };
+const struct command cmd_BV = { { 0x08, 0x00, 0x09, 0x02, 0x8c }, 5, 10, 7, 2 }; // Battery voltage
+const struct command cmd_BC = { { 0x08, 0x00, 0x0a, 0x02, 0xd9 }, 5, 10, 7, 2 }; // Battery current
+const struct command cmd_BT = { { 0x08, 0x00, 0x08, 0x02, 0x48 }, 5, 10, 7, 2 }; // Battery temperature
 // cmd_passcode write passcode ...
-
 
 
 const struct command * const msg_commands[] = {
@@ -98,7 +97,7 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 	// Flush the input buffer
 	while (Serial1.available())
 	{
-		(void) Serial1.read();
+		(void)Serial1.read();
 		delay(1);
 	}
 
@@ -127,10 +126,12 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 
 	// we did it, copy the data
 	memcpy(databuff, recv + comm->datapos, comm->datalen);
-	db_module(); db_print("got : ");
+	db_module(); db_print("got :");
 #ifdef _DEBUG
-	for (int i; i < comm->datalen; i++)
+	for (int i; i < comm->datalen; i++) {
+		Serial.print(" ");
 		Serial.print((byte)databuff[i], HEX);
+	}
 	db_println();
 #endif // _DEBUG
 	return 0;
@@ -161,13 +162,16 @@ inline uint8_t get_data_from_box(uint8_t *buffer) {
 
 inline uint8_t get_special_data_from_box(uint8_t *buffer) {
 	uint8_t recv[2];
-
+	uint8_t tries = 0;
 	// RSOC
-	while(send_command(msg_commands[0], recv)) ; // Retry on failure
+	while(send_command(msg_commands[0], recv) && tries < MAX_TRIES) tries++;
+
 	uint8_t soc = recv[0];
 
+	tries = 0;
 	// BC
-	while (send_command(msg_commands[9], recv)); // Retry on failure
+	while (send_command(msg_commands[9], recv) && tries < MAX_TRIES) tries++;
+
 	int bc = (int)((recv[1] << 8) + recv[0]);
 
 	db_module(); db_print(F("got soc: ")); db_print(soc); db_print(F(", bc: ")); db_println(bc);
