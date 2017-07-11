@@ -153,22 +153,26 @@ uint8_t wait_memory(uint16_t timeout) {
 */
 uint8_t write_eeprom(uint8_t *data, uint16_t address, uint16_t len)
 {
+	uint8_t code;
 	while (len > 0)
 	{
 		if ((address % PAGE_SIZE) + len >= PAGE_SIZE)
 		{
 			uint16_t len_part = PAGE_SIZE - (address % PAGE_SIZE);
+			code = write_eeprom_page(data, address, len_part);
 			len -= len_part;
 			address += len_part;
 			data += len_part;
-			return write_eeprom_page(data, address, len_part);
 		}
 		else
 		{
+			code = write_eeprom_page(data, address, len);
 			len = 0;
-			return write_eeprom_page(data, address, len);
 		}
+
+		if (code) return code;
 	}
+	return 0;
 }
 
 /*
