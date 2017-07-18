@@ -23,9 +23,12 @@ SoftwareSerial sim_serial = SoftwareSerial(SIM_TX, SIM_RX);
 #define SIM_USER "user"
 #define SIM_PWD "pass"
 
+#define BOXIDSTRING "testbox"
+
 // NOTE : DO NOT INCLUDE HTTP:// OR IT WILL FAIL SILENTLY
 //#define POST_URL "putsreq.com/WZlJISLFfouvdVe3G3pu"
-#define POST_URL "posttestserver.com/post.php?dir=hen"
+//#define POST_URL "posttestserver.com/post.php?dir=hen"
+#define POST_URL "90.112.154.97/submit.php?id=" BOXIDSTRING
 
 #define OK_REPLY "\r\nOK\r\n"
 
@@ -129,8 +132,8 @@ enum comm_status_code power_on(void) {
 	uint8_t tries = 0;
 	// While not boot timeout
 	while (tries < MAX_AT_TRIES) {
-		// AT baud synchronism
 		flush_input();
+		// AT baud synchronisation
 		if (get_reply_P(PSTR("AT"), PSTR(OK_REPLY), 100) == COMM_OK) {  // AT OK
 			delay(200);
 			get_reply_P(PSTR("ATE0"), PSTR(OK_REPLY), 100); // Disable echo
@@ -243,7 +246,7 @@ enum comm_status_code comm_send_report(void) {
 	}
 	if (get_reply_P(NULL, PSTR("+HTTPACTION: 1,"), 60000) != COMM_OK) { // Send nothing, wait for the +httaction response
 		db("Module did not respond");                            // somehow no http timeout ???
-		return COMM_ERR_RETRY;
+		return COMM_ERR_RETRY_LATER;						// Assume the data was lost (got "ok" on action)
 	}
 	db("Got answer from request");
 	char http_code[4];
@@ -257,7 +260,7 @@ enum comm_status_code comm_send_report(void) {
 	http_code[3] = 0;
 	db_module(); db_print(F("HTTP code : ")); db_println(http_code);
 
-	get_reply_P(PSTR("AT+HTTPTERM"), PSTR(OK_REPLY), 500);  // No error handling
+	get_reply_P(PSTR("AT+HTTPTERM"), PSTR(OK_REPLY), 500);  // No need for error handling
 	//get_reply("AT+SAPBR=0,1", OK_REPLY, 500);  // We don't really have to, happens on shutdown 
 
 	power_off();
@@ -265,7 +268,7 @@ enum comm_status_code comm_send_report(void) {
 	if (http_code[0] == '2' && http_code[2] == '0') { // 200 OK
 		return COMM_OK;
 	}
-
+	// any other code
 	return COMM_ERR_RETRY_LATER;
 }
 
