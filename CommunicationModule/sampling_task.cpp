@@ -10,8 +10,6 @@
 
 #include "util/crc16.h"
 
-#define SAMPLE_SIZE 19
-
 // Fills 0 until the 16th, then preamble address
 const byte msg_header[] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0xc5,0x6a,0x29};
 
