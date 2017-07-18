@@ -10,11 +10,10 @@
 
 #include "util/crc16.h"
 
-#define SAMPLE_SIZE 18
+#define SAMPLE_SIZE 19
 
 // Fills 0 until the 16th, then preamble address
 const byte msg_header[] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0xc5,0x6a,0x29};
-
 
 
 struct command {
@@ -90,15 +89,15 @@ inline void get_dummy_data(uint8_t *buffer) {
 
 
 #define MAX_TRIES 5
-
 inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 	uint8_t recv[32];
 
 	// Flush the input buffer
+	delay(50);
 	while (Serial1.available())
 	{
 		(void)Serial1.read();
-		delay(1);
+		delay(5);
 	}
 
 	// send the command
@@ -146,18 +145,16 @@ inline uint8_t get_data_from_box(uint8_t *buffer) {
 		while (send_command(msg_commands[i], buffer) && tries < MAX_TRIES) {
 			tries++;
 		}
-
 		if (tries == MAX_TRIES) { // We didn't make it
 			db("excessive retries");
 			return -1;
 		}
+
 		buffer += msg_commands[i]->datalen;
 	}
 	db("sampling successful");
 	return 0;
 }
-
-
 
 
 inline uint8_t get_special_data_from_box(uint8_t *buffer) {
@@ -224,7 +221,6 @@ inline uint8_t get_special_data_from_box(uint8_t *buffer) {
 }
 
 
-
 /* Sampling task
 	Retrieves data from the box and stores it into the memory
 
@@ -250,8 +246,8 @@ void sampling_task(void) {
 	// Get sample data
 	uint8_t buff[SAMPLE_SIZE];
 	//uint8_t code = get_dummy_data(buff);
-	//uint8_t code = get_data_from_box(buff);
-	uint8_t code = get_special_data_from_box(buff);
+	uint8_t code = get_data_from_box(buff);
+	//uint8_t code = get_special_data_from_box(buff);
 
 	if (code != 0) { // Something wrong
 		db("sampling aborted");
