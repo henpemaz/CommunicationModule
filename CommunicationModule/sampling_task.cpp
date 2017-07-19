@@ -94,7 +94,7 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 	delay(50);
 	while (Serial1.available())
 	{
-		(void)Serial1.read();
+		Serial1.read();
 		delay(5);
 	}
 

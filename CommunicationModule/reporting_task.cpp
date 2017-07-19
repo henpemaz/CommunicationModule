@@ -7,6 +7,7 @@
 
 #include "task_scheduler.h"
 #include "reporting_task.h"
+#include "sampling_task.h"
 #include "storage_manager.h"
 #include "communication.h"
 
