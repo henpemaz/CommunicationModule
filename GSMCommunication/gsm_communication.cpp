@@ -246,6 +246,7 @@ enum comm_status_code comm_send_report(void) {
 	}
 	if (get_reply_P(NULL, PSTR("+HTTPACTION: 1,"), 60000) != COMM_OK) { // Send nothing, wait for the +httaction response
 		db("Module did not respond");                            // somehow no http timeout ???
+		comm_abort();
 		return COMM_ERR_RETRY_LATER;						// Assume the data was lost (got "ok" on action)
 	}
 	db("Got answer from request");
