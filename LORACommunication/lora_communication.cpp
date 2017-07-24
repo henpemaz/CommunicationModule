@@ -59,14 +59,9 @@ void onEvent(ev_t ev) {
 	case EV_JOINED:
 		Serial.println(F("EV_JOINED"));
 		BLINK_INTERVAL = 1;
-    /*
-    LMIC.frame[0] = LMIC.snr;
-    LMIC_setTxData2(1,LMIC.frame,1,0);
-    Serial.println(F("Packet queued"));
-    */
-    //lora_comm_report(&reportjob);
-    os_setCallback(&inittest,initjob);
-    break;
+		//lora_comm_report(&reportjob);
+		os_setCallback(&inittest,initjob);
+		break;
 	case EV_RFU1:
 		Serial.println(F("EV_RFU1 - unhandled event"));
 		break;
@@ -86,7 +81,7 @@ void onEvent(ev_t ev) {
 		}
 		// Schedule next transmission
 		//lora_comm_report(&reportjob);
-   	break;
+   		break;
 	default:
 		Serial.println(F("Unknown event"));
 		break;
@@ -135,14 +130,14 @@ void lora_comm_setup(void)
 
 	LMIC_startJoining();
 
-  //LMIC.shutdown() ?? 
+	//LMIC.shutdown() ?? 
 }
 
 void initjob(osjob_t* job)
 {
-  LMIC.frame[0] = LMIC.snr;
-  LMIC_setTxData2(1,LMIC.frame,1,0);
-  Serial.println(F("Packet queued"));
+	LMIC.frame[0] = LMIC.snr;
+	LMIC_setTxData2(1,LMIC.frame,1,0);
+	Serial.println(F("Packet queued"));
 }
 
 enum comm_status_code comm_setup(void)
