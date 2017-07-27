@@ -5,9 +5,16 @@
 
 #include "arduino.h"
 
-#define REPORTING_LOOPTIME  86400
+#ifdef GSM
+#define REPORTING_LOOPTIME  7200
+#define MAX_BYTES_PER_REPORT 65536u
+#elif LORA
+#define REPORTING_LOOPTIME  600
+#define MAX_BYTES_PER_REPORT 55u
+#endif
 
-#define MAX_SAMPLES_PER_REPORT 65536u
+
+
 
 #define START_COMM_MAX_RETRIES 5
 

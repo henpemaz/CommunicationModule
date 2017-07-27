@@ -7,6 +7,7 @@
 
 #include "task_scheduler.h"
 #include "reporting_task.h"
+#include "sampling_task.h"
 #include "storage_manager.h"
 #include "communication.h"
 
@@ -57,10 +58,10 @@ void reporting_task(void){
 	}
 	// If too many samples, trim and signal that the task has to be re-run later
 	bool samples_remaining = false;
-	if (available > MAX_SAMPLES_PER_REPORT) {
+	if (available > MAX_BYTES_PER_REPORT) {
 		db("too many samples, trim");
 		samples_remaining = true;
-		available = MAX_SAMPLES_PER_REPORT;
+		available = MAX_BYTES_PER_REPORT - MAX_BYTES_PER_REPORT%SAMPLE_SIZE; // Fit a full number of samples
 	}
 	db("got amount of data");
 
