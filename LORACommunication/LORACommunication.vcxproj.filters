@@ -23,11 +23,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="LORACommunication.ino" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="lora_communication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LORACommunication.ino" />
   </ItemGroup>
 </Project>
