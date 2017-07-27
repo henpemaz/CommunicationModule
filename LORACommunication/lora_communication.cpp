@@ -1,5 +1,7 @@
 #include "communication.h"
 
+#ifdef LORA
+
 #include "debug.h"
 #include <lmic.h>
 #include <hal/hal.h>
@@ -232,3 +234,4 @@ void uitoa(uint16_t val, uint8_t *buff) {
 	if (i) do { buff[0] = buff[i]; } while (*(buff++) != 0);
 }
 
+#endif // LORA
