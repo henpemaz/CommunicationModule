@@ -21,9 +21,6 @@
     <ClInclude Include="task_scheduler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="__vm\.Scheduler.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="task_scheduler.cpp">

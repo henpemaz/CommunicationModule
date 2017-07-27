@@ -1,14 +1,18 @@
-#include "lora_communication.h"
+#include "communication.h"
+
+#include "debug.h"
+#include <lmic.h>
+#include <hal/hal.h>
+#include <SPI.h>
 
 /*
 Communication library for the Feather FONA GSM board and the Feather LORA
 */
+// Prototypes
+#define UITOA_BUFFER_SIZE 6
+void uitoa(uint16_t val, uint8_t *buff);
 
-//test data
-
-static char data[] = "Frame Counter : ";
-
-// CONFIGURATION 
+// Configuration
 
 // application router ID -> Gateway EUI (little-endian format)
 static const u1_t PROGMEM APPEUI[8] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
@@ -36,7 +40,7 @@ const unsigned RETRY_JOIN_INTERVAL = 120;
 // 500 ms - LoRa module trying to join network
 // 1 s    - LoRa module successfully joined network
 // 100 ms - LoRa module not joined network after retrying.
-uint8_t BLINK_INTERVAL = 5;
+uint8_t BLINK_INTERVAL = 1;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -47,6 +51,14 @@ const lmic_pinmap lmic_pins = {
 };
 
 // LMIC Event Callback
+
+// false - default
+// true - Module is successfully connected to the gateway
+boolean isJoined = false;
+
+// false - default
+// true - Data successfully sent
+boolean isSent = false;
 
 void onEvent(ev_t ev) {
 	Serial.print(os_getTime());
@@ -59,8 +71,7 @@ void onEvent(ev_t ev) {
 	case EV_JOINED:
 		Serial.println(F("EV_JOINED"));
 		BLINK_INTERVAL = 1;
-		//lora_comm_report(&reportjob);
-		os_setCallback(&inittest,initjob);
+		isJoined = true;
 		break;
 	case EV_RFU1:
 		Serial.println(F("EV_RFU1 - unhandled event"));
@@ -68,28 +79,27 @@ void onEvent(ev_t ev) {
 	case EV_JOIN_FAILED:
 		Serial.println(F("EV_JOIN_FAILED"));
 		BLINK_INTERVAL = 100;
-		os_setTimedCallback(&retry_join, os_getTime() + sec2osticks(RETRY_JOIN_INTERVAL), retry_joinjob);
 		break;
 	case EV_TXCOMPLETE:
 		Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
 		if (LMIC.txrxFlags & TXRX_ACK)
-		Serial.println(F("Received ack"));
+			Serial.println(F("Received ack"));
 		if (LMIC.dataLen) {
-		Serial.println(F("Received "));
-		Serial.println(LMIC.dataLen);
-		Serial.println(F(" bytes of payload"));
+			Serial.println(F("Received "));
+			Serial.println(LMIC.dataLen);
+			Serial.println(F(" bytes of payload"));
 		}
-		// Schedule next transmission
-		//lora_comm_report(&reportjob);
-   		break;
+		isSent = true;
+		break;
 	default:
 		Serial.println(F("Unknown event"));
 		break;
 	}
 }
 
-///// JOBS  /////
+// Jobs
 
+static osjob_t blinkjob;
 void blinkfunc(osjob_t* job)
 {
 	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
@@ -100,9 +110,7 @@ void blinkfunc(osjob_t* job)
 		os_setTimedCallback(job, os_getTime() + sec2osticks(BLINK_INTERVAL), blinkfunc);
 }
 
-// Setup
-
-void lora_comm_setup(void)
+enum comm_status_code comm_setup(void)
 {
 	// Configure pins
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -123,77 +131,53 @@ void lora_comm_setup(void)
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(2000);
 
+	Serial.println(F("LoRa communication setup"));
 	// LMIC init
 	os_init();
+
+	//Blink job
+	os_setCallback(&blinkjob, blinkfunc);
+
 	// Reset the MAC state. Session and pending data transfers will be discarded.
 	LMIC_reset();
 
 	LMIC_startJoining();
 
-	//LMIC.shutdown() ?? 
-}
-
-void initjob(osjob_t* job)
-{
-	LMIC.frame[0] = LMIC.snr;
-	LMIC_setTxData2(1,LMIC.frame,1,0);
-	Serial.println(F("Packet queued"));
-}
-
-enum comm_status_code comm_setup(void)
-{
-	if (LMIC.txrxFlags)
+	while (!isJoined)
 	{
-		return COMM_OK;
+		os_runloop_once();
 	}
-	else
-	{
-		return COMM_ERR_RETRY;
-	}
+
+	return COMM_OK;
+
+	// Rajouter le cas COMM_ERR_RETRY
 }
 
-enum comm_status_code code;
-
-void rapportjob(osjob_t* job)
+enum comm_status_code comm_start_report(uint16_t totallen)
 {
-  //int code;
-  code = comm_setup();
-  Serial.println(F(code));
-  if (!code)
-  {
-  os_setTimedCallback(job, os_getTime() + sec2osticks(20), rapportjob);
-  }
+	Serial.println(F("Starting report"));
+
+	// Preparing data
+	uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
+	uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
+	Serial.println((char*)lenght_buffer);  // <totallen> bytes to send
+
+	return COMM_OK;
 }
-// Fonction ci-dessous pour tester le retour (pas de retour avec comm_status_code sur Arduino IDE)
-/*
-int comm_setup(void)
+
+// buffer to send
+uint8_t buf[25];
+enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght)
 {
-  if (LMIC.txrxFlags)
-  {
-    return 1;
-  }
-  else
-  {
-    return 0;
-  }
-}
-*/
-
-
-int retry_join_count = 0;
-void retry_joinjob(osjob_t* job) 
-{
-	retry_join_count++;
-	Serial.print(os_getTime());
-	Serial.print(": Rerying join operation, attempt Nb: ");
-	Serial.println(retry_join_count);
-	LMIC_startJoining();
+	Serial.println(F("Fill report"));
+	memcpy(buf, buffer, lenght);
+	Serial.print(lenght);
+	Serial.println(F("bytes of data sent"));
+	return COMM_OK;
 }
 
-// Reporting
 
-uint16_t counter = 0;
-void lora_comm_report(osjob_t* job)
+enum comm_status_code comm_send_report(void)
 {
 	// Check if there is not a current TX/RX job running
 	if (LMIC.opmode & OP_TXRXPEND)
@@ -203,14 +187,48 @@ void lora_comm_report(osjob_t* job)
 	else
 	{
 		// Prepare upstream data transmission at the next possible time.
-		uint8_t buf[sizeof(data) + 1];
-		memcpy(buf, data, sizeof(buf));
-		counter++;
-		buf[sizeof(buf) - 2] = (counter >> 8);
-		buf[sizeof(buf) - 1] = counter;
+
+		// LMIC Init
+		os_init();
+		LMIC_reset();
+
 		LMIC_setTxData2(1, buf, sizeof(buf), 0);
 		Serial.println(F("Packet queued"));
+		while (!isSent)
+		{
+			os_runloop_once();
+		}
+		return COMM_OK;
 	}
-	// Next TX is scheduled after TX_COMPLETE event.
+}
+
+enum comm_status_code comm_abort(void)
+{
+	// Incomplète
+
+	LMIC_shutdown();
+	return COMM_OK;
+}
+
+// Custom uitoa, fixed base, expects buffer of the right size
+void uitoa(uint16_t val, uint8_t *buff) {
+	uint8_t i;
+	// Common exception
+	if (val == 0) {
+		buff[0] = 48;
+		buff[1] = 0;
+		return;
+	}
+
+	// Do the magic
+	i = UITOA_BUFFER_SIZE - 1;
+	buff[i] = 0;  // From the tail, we'll go towards the head
+	while (val) {
+		buff[--i] = 48 + val % 10;  // Fill in each digit (--i happens first, so i still points to the digit when done)
+		val /= 10;
+	}
+
+	// Left shift the result (remove padding)
+	if (i) do { buff[0] = buff[i]; } while (*(buff++) != 0);
 }
 
