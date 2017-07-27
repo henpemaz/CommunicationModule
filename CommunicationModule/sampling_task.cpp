@@ -113,6 +113,12 @@ inline uint8_t send_command(const struct command *comm, uint8_t *databuff) {
 		return -1;
 	}
 
+	// Check [C5 6A 29] header/preamble
+	if (recv[0] != 0xC5 || recv[1] != 0x6A || recv[2] != 0x29) {
+		db("bad header");
+		return -1;
+	}
+
 	// Check sum
 	uint8_t sum = 0;
 	for (int j = 0; j < comm->anslen - 1; j++) sum = _crc_ibutton_update(sum, recv[j]); // Maxim/Dallas CRC8
