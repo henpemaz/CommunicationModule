@@ -29,7 +29,7 @@ const char* getcode(enum comm_status_code code)
 
 void setup()
 {
-	const char report_string[] = "Hello World, this is FONA";
+	const char report_string[] = "Hello World, this is LORA";
 
 	enum comm_status_code code;
 	code = comm_setup();
