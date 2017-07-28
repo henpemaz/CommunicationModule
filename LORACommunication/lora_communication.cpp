@@ -33,8 +33,9 @@ void os_getDevKey(u1_t* buf) { memcpy_P(buf, APPKEY, 16); }
 // cycle limitations).
 const unsigned TX_INTERVAL = 60;
 
-// If JOIN failed, retry JOIN after this many seconds
-const unsigned RETRY_JOIN_INTERVAL = 120;
+//Set conection & TX timeout
+ostime_t JOIN_TIME = sec2osticks(60); // wait x secondes before timeout
+ostime_t TX_TIME = sec2osticks(20);
 
 // interval with which the LED blinks in seconds
 // used to give information about the LoRa state
@@ -126,14 +127,17 @@ enum comm_status_code comm_setup(void)
 	Serial.println(F("Starting"));
 
 	// Hard-resetting the radio
-	digitalWrite(lmic_pins.rst, LOW);
-	digitalWrite(LED_BUILTIN, LOW);
-	delay(2000);
-	digitalWrite(lmic_pins.rst, HIGH);
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(2000);
+	//digitalWrite(lmic_pins.rst, LOW);
+	//delay(2000);
+	//digitalWrite(lmic_pins.rst, HIGH);
+	comm_abort();
 
-	Serial.println(F("LoRa communication setup"));
+	return COMM_OK;
+}
+
+enum comm_status_code comm_start_report(uint16_t totallen)
+{
+	Serial.println(F("Starting report"));
 	// LMIC init
 	os_init();
 
@@ -145,30 +149,32 @@ enum comm_status_code comm_setup(void)
 
 	LMIC_startJoining();
 
-	while (!isJoined)
+	ostime_t start = os_getTime();
+	while ((os_getTime() - start < JOIN_TIME) && (!isJoined))
 	{
 		os_runloop_once();
 	}
 
-	return COMM_OK;
-
-	// Rajouter le cas COMM_ERR_RETRY
-}
-
-enum comm_status_code comm_start_report(uint16_t totallen)
-{
-	Serial.println(F("Starting report"));
-
-	// Preparing data
-	uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
-	uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
-	Serial.println((char*)lenght_buffer);  // <totallen> bytes to send
-
-	return COMM_OK;
+	if (!isJoined)
+	{
+		Serial.println("Connection timeout");
+		comm_abort();
+		return COMM_ERR_RETRY_LATER;
+	}
+	else
+	{
+		// Preparing data
+		uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
+		uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
+		Serial.print((char*)lenght_buffer);  // <totallen> bytes to send
+		Serial.println("bytes to send");
+		digitalWrite(LED_BUILTIN, LOW);
+		return COMM_OK;
+	}
 }
 
 // buffer to send
-uint8_t buf[25];
+uint8_t buf[51];
 enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght)
 {
 	Serial.println(F("Fill report"));
@@ -181,34 +187,46 @@ enum comm_status_code comm_fill_report(const uint8_t *buffer, int lenght)
 
 enum comm_status_code comm_send_report(void)
 {
-	// Check if there is not a current TX/RX job running
-	if (LMIC.opmode & OP_TXRXPEND)
+	if (isJoined) // otherwise, "LMIC_setTxData" will call LMIC_startJoining even though we had an error returned by comm_start_report
 	{
-		Serial.println(F("OP_TXRXPEND, not sending"));
-	}
-	else
-	{
-		// Prepare upstream data transmission at the next possible time.
-
-		// LMIC Init
-		os_init();
-		LMIC_reset();
-
-		LMIC_setTxData2(1, buf, sizeof(buf), 0);
-		Serial.println(F("Packet queued"));
-		while (!isSent)
+		// Check if there is not a current TX/RX job running
+		if (LMIC.opmode & OP_TXRXPEND)
 		{
-			os_runloop_once();
+			Serial.println(F("OP_TXRXPEND, not sending"));
+			return COMM_ERR_RETRY_LATER;
 		}
-		return COMM_OK;
+		else
+		{
+			//Blink job
+			os_setCallback(&blinkjob, blinkfunc);
+
+			// Prepare upstream data transmission at the next possible time. 
+			LMIC_setTxData2(1, buf, sizeof(buf), 0);
+			Serial.println(F("Packet queued"));
+			ostime_t start = os_getTime();
+			while ((!isSent) && (os_getTime() - start<TX_TIME))
+			{
+				os_runloop_once();
+			}
+
+			if (!isSent)
+			{
+				Serial.println("TX timeout");
+				comm_abort();
+				return COMM_ERR_RETRY_LATER;
+			}
+			comm_abort();
+			return COMM_OK;
+		}
 	}
+	return COMM_ERR_RETRY_LATER;
 }
 
 enum comm_status_code comm_abort(void)
 {
-	// Incomplète
-
-	LMIC_shutdown();
+	os_radio(RADIO_RST); // put radio to sleep
+	delay(2000);
+	digitalWrite(LED_BUILTIN, LOW);
 	return COMM_OK;
 }
 
