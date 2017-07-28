@@ -1,5 +1,5 @@
+#include <lmic.h>
 #include <SPI.h>
-#include <SoftwareSerial.h>
 
 
 #define DB_MODULE "Communication Module"
@@ -7,6 +7,7 @@
 
 
 #ifdef GSM
+#include <SoftwareSerial.h>
 #ifndef __AVR_ATmega32U4__
 #error Wrong board !
 #endif

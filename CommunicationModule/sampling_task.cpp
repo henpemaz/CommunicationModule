@@ -8,7 +8,28 @@
 #include "sampling_task.h"
 #include "storage_manager.h"
 
+#ifdef __AVR__
 #include "util/crc16.h"
+#else
+static inline uint8_t _crc_ibutton_update(uint8_t crc, uint8_t data) __attribute__((always_inline, unused));
+static inline uint8_t _crc_ibutton_update(uint8_t crc, uint8_t data)
+{
+	unsigned int i;
+
+	crc = crc ^ data;
+	for (i = 0; i < 8; i++) {
+		if (crc & 0x01) {
+			crc = (crc >> 1) ^ 0x8C;
+		}
+		else {
+			crc >>= 1;
+		}
+	}
+	return crc;
+}
+
+#endif // __AVR__
+
 
 // Fills 0 until the 16th, then preamble address
 const byte msg_header[] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0xc5,0x6a,0x29};
@@ -261,7 +282,7 @@ void sampling_task(void) {
 	}
 
 	// Store this sample to the external eeprom
-	db("writting sample to database");
+	db("writting sample to storage");
 	stor_write(buff, SAMPLE_SIZE);
 
 	stor_end();

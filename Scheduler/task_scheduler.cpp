@@ -7,19 +7,9 @@
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
-#endif
-
-#ifdef __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
+#elif __SAMD21G18A__ /* Using SAM-D21 - LORA module - RTC used for sleep management*/
 #include <samd.h>
-// cheat with the macros
-#define SLEEP_MODE_PWR_DOWN 0
-#define set_sleep_mode(...)   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk
-#define sleep_enable(...) 
-#define sleep_disable(...) 
-#define sleep_cpu(...) do{__WFI();}while(0)
 #endif
-
-
 
 
 /*
@@ -42,6 +32,8 @@ struct task_handle task_list[SCHED_MAX_TASKS];
 
 
 inline void tick_callback(void);
+void sched_sleep(void);
+
 
 void sched_setup(void) {
 	db("Setup");
@@ -181,20 +173,7 @@ void sched_mainloop(void) {
 			}
 		}
 		
-		power_all_disable(); // Disable peripherals
-		
-#ifdef _DEBUG
-		// Keep USB serial working...
-		set_sleep_mode(SLEEP_MODE_IDLE);
-#else
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-#endif
-		sleep_enable();
-		sleep_cpu(); // Will wake up every 1s due to the WDT/RTC interrupt
-		sleep_disable();
-		interrupts();
-
-		power_all_enable(); // Enable peripherals
+		sched_sleep();
 
 		db_start();
 
@@ -203,4 +182,28 @@ void sched_mainloop(void) {
 		delay(1);
 		digitalWrite(LED_BUILTIN, LOW);
 	} // while(1)
+}
+
+
+void sched_sleep(void) {
+#ifdef __AVR_ATmega32U4__
+	power_all_disable(); // Disable peripherals
+
+#ifdef _DEBUG
+						 // Keep USB serial working...
+	set_sleep_mode(SLEEP_MODE_IDLE);
+#else
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+#endif
+	sleep_enable();
+	sleep_cpu(); // Will wake up every 1s due to the WDT/RTC interrupt
+	sleep_disable();
+	interrupts();
+
+	power_all_enable(); // Enable peripherals
+
+#elif __SAMD21G18A__
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+	__WFI();
+#endif
 }
