@@ -10,6 +10,7 @@
 /*
 Communication library for the Feather FONA GSM board and the Feather LORA
 */
+
 // Prototypes
 #define UITOA_BUFFER_SIZE 6
 void uitoa(uint16_t val, uint8_t *buff);
@@ -157,7 +158,7 @@ enum comm_status_code comm_start_report(uint16_t totallen)
 
 	if (!isJoined)
 	{
-		Serial.println("Connection timeout");
+		Serial.println(F("Connection timeout"));
 		comm_abort();
 		return COMM_ERR_RETRY_LATER;
 	}
@@ -167,7 +168,7 @@ enum comm_status_code comm_start_report(uint16_t totallen)
 		uint8_t lenght_buffer[UITOA_BUFFER_SIZE];  // Used to store the ASCII representation of totallen
 		uitoa(totallen, lenght_buffer); // Custom fixed base uitoa function (see end of file)
 		Serial.print((char*)lenght_buffer);  // <totallen> bytes to send
-		Serial.println("bytes to send");
+		Serial.println(F("bytes to send"));
 		digitalWrite(LED_BUILTIN, LOW);
 		return COMM_OK;
 	}
@@ -211,7 +212,7 @@ enum comm_status_code comm_send_report(void)
 
 			if (!isSent)
 			{
-				Serial.println("TX timeout");
+				Serial.println(F("TX timeout"));
 				comm_abort();
 				return COMM_ERR_RETRY_LATER;
 			}
@@ -219,11 +220,13 @@ enum comm_status_code comm_send_report(void)
 			return COMM_OK;
 		}
 	}
+	Serial.println(F("Not connected to gateway"));
 	return COMM_ERR_RETRY_LATER;
 }
 
 enum comm_status_code comm_abort(void)
 {
+	Serial.println(F("Abort"));
 	os_radio(RADIO_RST); // put radio to sleep
 	delay(2000);
 	digitalWrite(LED_BUILTIN, LOW);
