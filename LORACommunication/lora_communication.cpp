@@ -221,6 +221,7 @@ enum comm_status_code comm_send_report(void)
 		}
 	}
 	Serial.println(F("Not connected to gateway"));
+	comm_abort();
 	return COMM_ERR_RETRY_LATER;
 }
 
